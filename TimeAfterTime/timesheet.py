@@ -8,7 +8,8 @@ from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import (QAction, QApplication, QDesktopWidget, 
                              QFileDialog, QMainWindow, QMessageBox, QTextEdit)
 
-from editdialogs import AddLineDialog, NewRateDialog, RemoveLineDialog
+from editdialogs import (AddLineDialog, NewRateDialog, RemoveLineDialog, 
+                         EditLineDialog)
 from filedialogs import (NewTimesheetDialog, OpenTimesheetDialog, 
                          DeleteTimesheetDialog)
 from processcsv import csv_to_html
@@ -199,6 +200,11 @@ class TimeAfterTime(QMainWindow):
         self.rld.show()
         self.rld.accepted.connect(self.update_display)
             
+    def editEntries(self):
+        self.ed = EditLineDialog(self.data)
+        self.ed.show()
+        self.ed.accepted.connect(self.update_display)
+        
     def open(self):
         """ Open another timesheet. """
         self.otd = OpenTimesheetDialog()
@@ -294,6 +300,10 @@ class TimeAfterTime(QMainWindow):
                 "Remove", self, shortcut=QKeySequence("C"), 
                 statusTip="Remove entries", triggered=self.removeLine)
         
+        self.editAct = QAction(QIcon.fromTheme(''), "Edit", self,
+                shortcut=QKeySequence("E"), statusTip="Edit entries",
+                triggered=self.editEntries)
+        
         self.setRateAct = QAction(QIcon.fromTheme('preferences-system'), 
                 "Set rate", self, shortcut=QKeySequence("R"), 
                 statusTip="Set hourly rate", triggered=self.setRate)
@@ -317,6 +327,7 @@ class TimeAfterTime(QMainWindow):
         self.editMenu = self.menuBar().addMenu("&Edit")
         self.editMenu.addAction(self.addAct)
         self.editMenu.addAction(self.removeAct)
+        self.editMenu.addAction(self.editAct)
         self.editMenu.addAction(self.setRateAct)
 
         self.menuBar().addSeparator()

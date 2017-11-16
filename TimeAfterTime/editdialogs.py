@@ -259,6 +259,77 @@ class RemoveLineDialog(QDialog):
 
         self.accept()
         
+        
+class EditLineDialog(QDialog):
+    
+    def __init__(self, data):
+        """ Edit lines in the timesheet.
+        
+            Parameters
+            ----------
+            data : Data object
+                object which holds all the csv data
+        """
+        super().__init__()
+        
+        self.initUI(data)
+        
+    def initUI(self, data):
+        
+        self.data = data
+        
+        # split csv data into list of headers and list of rows of data
+        header, self.csv_data = head_tail(self.data.csv_data)
+
+        # make table
+        self.table = QTableWidget(len(self.csv_data), len(header))
+        # only select rows
+#        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # remove numbers from rows
+        self.table.verticalHeader().setVisible(False)
+        # set headers
+        self.table.setHorizontalHeaderLabels(header)
+
+        # put data in table
+        for row, data in enumerate(self.csv_data):
+            
+            date, dur, act, rate = data.split(',')
+            
+            item0 = QTableWidgetItem(date)
+            item1 = QTableWidgetItem(dur)
+            item2 = QTableWidgetItem(act)
+            item3 = QTableWidgetItem(rate)
+            self.table.setItem(row, 0, item0)
+            self.table.setItem(row, 1, item1)
+            self.table.setItem(row, 2, item2)
+            self.table.setItem(row, 3, item3)
+            
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+                                     QDialogButtonBox.Cancel)
+
+        buttonBox.accepted.connect(self.accept)
+        buttonBox.rejected.connect(self.reject)
+        
+        # for some reason, self.table.width() returns a number larger than
+        # it should be
+        width = 4*self.table.columnWidth(0)
+        
+        # exaplin how this window works
+        explain = QLabel(wordWrap=True)
+        explain.setMinimumWidth(width)
+        explain.setText('Edit rows in the timesheet.')
+        
+        layout = QVBoxLayout()
+        layout.addWidget(explain)
+        layout.addWidget(self.table)
+        layout.addWidget(buttonBox)
+        
+        self.setLayout(layout)
+        
+        self.setWindowTitle('Edit entries')
+        self.resize(width, 400)
+        
 
 class NewRateDialog(QDialog):
     
