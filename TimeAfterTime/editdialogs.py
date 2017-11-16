@@ -1,0 +1,310 @@
+""" 
+Dialogs required by Timesheet when adding or removing data.
+Supplies AddLineDialog, NewRateDialog, and RemoveLineDialog.
+"""
+
+from PyQt5.QtGui import QIcon, QKeySequence
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QAbstractItemView, QCompleter, QDialog, 
+                             QDialogButtonBox, QGridLayout, QLabel, QLineEdit, 
+                             QMessageBox, QPushButton, QTableWidget, 
+                             QTableWidgetItem, QVBoxLayout)
+from str_to_date import str_to_date
+from format_dur import format_duration
+from processcsv import get_unique, head_tail
+import os
+import re
+
+datapath = os.path.join(os.path.expanduser('~'), '.timesheets')
+datefmt = '%d %b %Y'
+
+class AddLineDialog(QDialog):
+    
+    def __init__(self, data):
+        """ Add lines to timesheet. 
+            
+            Parameters
+            ----------
+            
+            data : Data object
+                object which holds all the csv data
+        """
+        super().__init__()
+        
+        self.initUI(data)
+        
+        
+    def initUI(self, data):
+        
+        # 'data' is the csv/config data object
+        self.data = data
+        
+        self.newData = ''
+        
+        self.rows = []
+        
+        # message for main window status bar
+        self.msg = ''
+        
+        # get words for QCompleter
+        self.uniqact = get_unique(self.data.csv_data, 'Activity', False)
+        
+        self.newButton = QPushButton(QIcon.fromTheme('list-add'), '')
+        self.newButton.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_N))
+        self.newButton.clicked.connect(self.addLine)
+        
+        self.dateLabel = QLabel('Date')
+        self.durLabel = QLabel('Duration')
+        self.actLabel = QLabel('Activity')
+        self.rateLabel = QLabel('Rate') 
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+                                     QDialogButtonBox.Cancel)
+
+        buttonBox.accepted.connect(self.set_new_values)
+        buttonBox.rejected.connect(self.reject)
+
+        self.layout = QGridLayout()
+        
+        self.row = 0
+        
+        self.layout.addWidget(self.newButton, self.row, 0)
+        self.layout.addWidget(buttonBox, self.row, 1)
+        
+        self.row += 1
+
+        self.layout.addWidget(self.dateLabel, self.row, 0)
+        self.layout.addWidget(self.durLabel, self.row, 1)
+        self.layout.addWidget(self.actLabel, self.row, 2)
+        self.layout.addWidget(self.rateLabel, self.row, 3)
+        
+        # add lineedit objects
+        self.addLine()
+        
+        self.setLayout(self.layout)
+        
+        self.setWindowTitle('Add hours')
+        
+        
+    def makeLine(self):
+        """ Make and initialise QLineEdit objects. """
+        
+        self.dateEdit = QLineEdit(self)
+        self.durEdit = QLineEdit(self)
+        self.actEdit = QLineEdit(self)
+        self.rateEdit = QLineEdit(self)
+        
+        # display today's date and default rate
+        self.dateEdit.setText((str_to_date('').strftime(datefmt)))
+        self.durEdit.setText('')
+        self.actEdit.setText('')
+        self.rateEdit.setText(self.data.rate)
+            
+        # make a QCompleter for 'activity' with up-to-date info
+        # if last given value of activity isn't in the completer list, add it
+        if self.row > 1:    # make sure there's at least one row of QLineEdits
+            # self.rows is the content from the QLineEdits
+            # self.row is current row in QGridLayout
+            # first entry in self.rows when self.row = 2
+            prev_act = self.rows[self.row-2][2].text()
+            if prev_act not in self.uniqact:
+                self.uniqact.append(prev_act)
+                
+        # make completer with uniqact for actEdit
+        self.completer(self.uniqact, self.actEdit)
+
+        return (self.dateEdit, self.durEdit, self.actEdit, self.rateEdit)
+            
+    def addLine(self):
+        """ Add new line to Dialog """
+        
+        # make new row
+        fields = self.makeLine()
+        # keep all rows in a list, so their contents can be accessed
+        self.rows.append(fields)
+        # unpack QLineEdits
+        da, du, a, r = fields
+        
+        # increment row
+        self.row += 1
+        
+        self.layout.addWidget(da, self.row, 0)
+        self.layout.addWidget(du, self.row, 1)
+        self.layout.addWidget(a, self.row, 2)
+        self.layout.addWidget(r, self.row, 3)
+        
+    def completer(self, lst, edit):
+        comp = QCompleter(lst)
+        comp.setCaseSensitivity(Qt.CaseInsensitive)
+        edit.setCompleter(comp)
+        
+    def update_completer(self, new, lst, edit):
+        if new not in lst:
+            lst += new
+            print(lst)
+            self.completer(lst, edit)
+        
+    def set_new_values(self):
+        """ Put new csv data into Data object. """
+        
+        self.newData = ''
+        
+        # get text from every QLineEdit
+        for row in self.rows:
+            
+            line = [field.text() for field in row]
+            
+            # format date and duration
+            line[0] = str(str_to_date(line[0]))
+            line[1] = format_duration(line[1])
+            
+            try:
+                line = ','.join(line)
+                self.newData += line + '\n'
+            except TypeError:
+                self.not_added_message(line)
+            
+        self.data.add_new(self.newData)
+                    
+        self.accept()
+        
+    def not_added_message(self, line):
+        title = 'Could not add line!'
+        message = 'Empty fields in entry. This will not be added to timesheet.'
+        QMessageBox.warning(self, title, message)
+
+        
+class RemoveLineDialog(QDialog):
+    
+    def __init__(self, data):
+        """ Remove lines from the timesheet.
+        
+            Parameters
+            ----------
+            data : Data object
+                object which holds all the csv data
+        """
+        super().__init__()
+        
+        self.initUI(data)
+        
+    def initUI(self, data):
+        
+        self.data = data
+        
+        # split csv data into list of headers and list of rows of data
+        header, self.csv_data = head_tail(self.data.csv_data)
+
+        # make table
+        self.table = QTableWidget(len(self.csv_data), len(header))
+        # only select rows
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # remove numbers from rows
+        self.table.verticalHeader().setVisible(False)
+        # set headers
+        self.table.setHorizontalHeaderLabels(header)
+
+        # put data in table
+        for row, data in enumerate(self.csv_data):
+            
+            date, dur, act, rate = data.split(',')
+            
+            item0 = QTableWidgetItem(date)
+            item1 = QTableWidgetItem(dur)
+            item2 = QTableWidgetItem(act)
+            item3 = QTableWidgetItem(rate)
+            self.table.setItem(row, 0, item0)
+            self.table.setItem(row, 1, item1)
+            self.table.setItem(row, 2, item2)
+            self.table.setItem(row, 3, item3)
+            
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+                                     QDialogButtonBox.Cancel)
+
+        buttonBox.accepted.connect(self.remove_selected)
+        buttonBox.rejected.connect(self.reject)
+        
+        # for some reason, self.table.width() returns a number larger than
+        # it should be
+        width = 4*self.table.columnWidth(0)
+        
+        # exaplin how this window works
+        explain = QLabel(wordWrap=True)
+        explain.setMinimumWidth(width)
+        explain.setText('Select rows and click "OK" to remove them from the '
+                        'timesheet.\nThis cannot be undone, so please be '
+                        'careful!')
+        
+        layout = QVBoxLayout()
+        layout.addWidget(explain)
+        layout.addWidget(self.table)
+        layout.addWidget(buttonBox)
+        
+        self.setLayout(layout)
+        
+        self.setWindowTitle('Remove entries')
+        self.resize(width, 400)
+        
+        
+    def remove_selected(self):
+        """ Remove selected rows from the timesheet. """
+        self.selected = self.table.selectedItems()
+        
+        rows = set(item.row() for item in self.selected)
+        
+        for idx in rows:
+            row = self.csv_data[idx]
+            self.data.csv_data = re.sub(row, '', self.data.csv_data)
+
+        self.accept()
+        
+
+class NewRateDialog(QDialog):
+    
+    def __init__(self, data):
+        """ Change the default rate of pay.
+        
+            Parameters
+            ----------
+            data : Data object
+                object which holds all the csv data
+        """
+        super().__init__()
+        
+        self.initUI(data)
+        
+    def initUI(self, data):
+        
+        self.data = data
+        
+        self.rateLabel = QLabel('Default rate (£):')
+        self.rateEdit = QLineEdit(self)
+        self.rateEdit.setText(self.data.rate)
+        self.rateEdit.selectAll()
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+                                     QDialogButtonBox.Cancel)
+
+        buttonBox.accepted.connect(self.saveRate)
+        buttonBox.rejected.connect(self.reject)
+
+        layout = QGridLayout()
+        layout.setColumnStretch(1, 1)
+        
+        row = 0
+        layout.addWidget(self.rateLabel, row, 0)
+        layout.addWidget(self.rateEdit, row, 1)
+        
+        row += 1
+        layout.addWidget(buttonBox, row, 1)
+ 
+        self.setLayout(layout)
+        
+        self.setWindowTitle('Set default rate')
+
+        
+    def saveRate(self):
+        self.data.new_rate(self.rateEdit.text())
+        self.accept()
+        
