@@ -299,9 +299,8 @@ class RemoveLineDialog(TableLineDiaolg):
                 object which holds all the csv data
         """
         super().__init__(data)
-        
+
     def customise(self):
-        
         # only select rows
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         
@@ -310,6 +309,19 @@ class RemoveLineDialog(TableLineDiaolg):
                              'be careful!')
         
         self.setWindowTitle('Remove entries')
+        
+    def apply_changes(self):
+        """ Remove selected rows from the timesheet. """
+        self.selected = self.table.selectedItems()
+        
+        rows = set(item.row() for item in self.selected)
+        
+        for idx in rows:
+            row = self.csv_data[idx]
+            self.data.csv_data = re.sub(row, '', self.data.csv_data)
+            self.data.modified = True
+
+        self.accept()
         
         
 class EditLineDialog(TableLineDiaolg):
@@ -333,25 +345,16 @@ class EditLineDialog(TableLineDiaolg):
         # check every item in the table against the csv data 
         
         for row in range(self.num_rows):
-            for col in range(self.num_cols):
-                item = self.table.item(row, col)
-                
-                if item is not None:
-                    pass
-#                    # cast to float/string, as for some reason, items that
-#                    # appear to be the same return False when == is applied
-#                    try:
-#                        t = float(item.text())
-#                        d = float(self.data[row,col])
-#                    except ValueError:
-#                        t = str(item.text())
-#                        d = str(self.data[row,col])
-#                        
-#                    # if item in table is different from item in csv, write
-#                    # to csv
-#                    if t != d:
-#                        self.data[row, col] = t
-#                    
+            
+            trow = ','.join([self.table.item(row, col).text() 
+                             for col in range(self.num_cols)])
+    
+            drow = self.csv_data[row]
+            
+            if trow != drow:
+                self.data.csv_data = re.sub(drow, trow, self.data.csv_data)
+                self.data.modified = True
+            
         self.accept()
         
 
