@@ -236,6 +236,9 @@ class TableLineDiaolg(QDialog_CTRL_Q):
         
         header, self.csv_data = head_tail(self.data.csv_data)
         
+        # display most recent csv_data at top
+        self.csv_data.reverse()
+        
         self.num_rows = len(self.csv_data)
         self.num_cols = len(header)
 

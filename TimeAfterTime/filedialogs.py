@@ -12,7 +12,7 @@ import re
 import abc
 import subprocess
 
-datapath = os.path.join(os.path.expanduser('~'), '.timesheets')
+datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 
 class NewTimesheetDialog(QDialog):
     
