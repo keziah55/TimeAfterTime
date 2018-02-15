@@ -5,7 +5,7 @@ Supplies AddLineDialog, NewRateDialog, and RemoveLineDialog.
 
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QAbstractItemView, QCompleter, QDialog, 
+from PyQt5.QtWidgets import (QAbstractItemView, QAction, QCompleter, QDialog, 
                              QDialogButtonBox, QGridLayout, QLabel, QLineEdit, 
                              QMessageBox, QPushButton, QTableWidget, 
                              QTableWidgetItem, QVBoxLayout)
@@ -14,6 +14,7 @@ from format_dur import format_duration
 from processcsv import get_unique, head_tail
 import os
 import re
+import abc
 
 datapath = os.path.join(os.path.expanduser('~'), '.timesheets')
 datefmt = '%d %b %Y'
@@ -155,26 +156,139 @@ class AddLineDialog(QDialog):
             line = [field.text() for field in row]
             
             # format date and duration
-            line[0] = str(str_to_date(line[0]))
-            line[1] = format_duration(line[1])
+            # catch any exception thrown if the value entered cannot be parsed
+            try:
+                line[0] = str(str_to_date(line[0]))
+            except ValueError:
+                self.invalid_value_message(line[0])
+                error = True
+                
+            try:
+                line[1] = format_duration(line[1])
+            except ValueError:
+                self.invalid_value_message(line[1])
+                error = True
             
             try:
                 line = ','.join(line)
                 self.newData += line + '\n'
             except TypeError:
-                self.not_added_message(line)
+                self.empty_value_message(line)
             
-        self.data.add_new(self.newData)
-                    
-        self.accept()
+        if not error:
+            self.data.add_new(self.newData)
+            self.accept()
         
-    def not_added_message(self, line):
+    def empty_value_message(self, line):
         title = 'Could not add line!'
-        message = 'Empty fields in entry. This will not be added to timesheet.'
+        message = 'Empty fields in entry. This line will not be added.'
         QMessageBox.warning(self, title, message)
+        
+    def invalid_value_message(self, value):
+        title = 'Could not add line!'
+        message = "'{}' contains an invalid value.".format(value)
+        QMessageBox.warning(self, title, message)
+        
+        
+class TableLineDiaolg(QDialog):
+    
+    __metaclass__ = abc.ABCMeta
+    
+    def __init__(self, data):
+        """ Base class for displaying the timesheet as a table for editing.
+        
+            Implementations of `customise()` and `apply_changes()` will need
+            to be provided.
+            You may wish to set `self.explain.setText()` and 
+            `self.setWindowTitle()` in `customise()`.
+        
+            Parameters
+            ----------
+            data : Data object
+                object which holds all the csv data
+        """
+        super().__init__()
+        
+        self.initUI(data)
+        
+        self.customise()
+        
+    def initUI(self, data):
+        
+        self.data = data
+        
+        header, self.csv_data = head_tail(self.data.csv_data)
+        
+        self.num_rows = len(self.csv_data)
+        self.num_cols = len(header)
+
+        # make table
+        self.table = QTableWidget(self.num_rows, self.num_cols)
+        # remove numbers from rows
+        self.table.verticalHeader().setVisible(False)
+        # set headers
+        self.table.setHorizontalHeaderLabels(header)
+
+        # put data in table
+        for row, data in enumerate(self.csv_data):
+            
+            date, dur, act, rate = data.split(',')
+            
+            item0 = QTableWidgetItem(date)
+            item1 = QTableWidgetItem(dur)
+            item2 = QTableWidgetItem(act)
+            item3 = QTableWidgetItem(rate)
+            self.table.setItem(row, 0, item0)
+            self.table.setItem(row, 1, item1)
+            self.table.setItem(row, 2, item2)
+            self.table.setItem(row, 3, item3)
+            
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+                                     QDialogButtonBox.Cancel)
+
+        buttonBox.accepted.connect(self.apply_changes)
+        buttonBox.rejected.connect(self.reject)
+        
+        for i in range(self.num_rows):
+           self.table.setColumnWidth(i, 110)
+        
+        # for some reason, self.table.width() returns a number larger than
+        # it should be
+        width = (self.num_cols + 0.1) * self.table.columnWidth(0)
+        
+        # exaplin how this window works
+        # self.explain.setText() should be applied in the derived classes
+        self.explain = QLabel(wordWrap=True)
+        self.explain.setMinimumWidth(width)
+        self.explain.setText('')
+        
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.explain)
+        self.layout.addWidget(self.table)
+        self.layout.addWidget(buttonBox)
+
+        self.resize(width, 400)
+        
+        self.setLayout(self.layout)
+        
+        self.setWindowTitle('Table dialog')
+        
+        self.exitAct = QAction("E&xit", self, 
+                               shortcut=QKeySequence(Qt.CTRL + Qt.Key_Q),
+                               statusTip="Exit the application", 
+                               triggered=self.close)
+        self.addAction(self.exitAct)
+    
+    @abc.abstractmethod    
+    def customise(self): pass
+    
+    @abc.abstractmethod
+    def apply_changes(self): pass
+    
 
         
-class RemoveLineDialog(QDialog):
+class RemoveLineDialog(TableLineDiaolg):
     
     def __init__(self, data):
         """ Remove lines from the timesheet.
@@ -184,83 +298,21 @@ class RemoveLineDialog(QDialog):
             data : Data object
                 object which holds all the csv data
         """
-        super().__init__()
+        super().__init__(data)
         
-        self.initUI(data)
+    def customise(self):
         
-    def initUI(self, data):
-        
-        self.data = data
-        
-        # split csv data into list of headers and list of rows of data
-        header, self.csv_data = head_tail(self.data.csv_data)
-
-        # make table
-        self.table = QTableWidget(len(self.csv_data), len(header))
         # only select rows
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # remove numbers from rows
-        self.table.verticalHeader().setVisible(False)
-        # set headers
-        self.table.setHorizontalHeaderLabels(header)
-
-        # put data in table
-        for row, data in enumerate(self.csv_data):
-            
-            date, dur, act, rate = data.split(',')
-            
-            item0 = QTableWidgetItem(date)
-            item1 = QTableWidgetItem(dur)
-            item2 = QTableWidgetItem(act)
-            item3 = QTableWidgetItem(rate)
-            self.table.setItem(row, 0, item0)
-            self.table.setItem(row, 1, item1)
-            self.table.setItem(row, 2, item2)
-            self.table.setItem(row, 3, item3)
-            
         
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
-                                     QDialogButtonBox.Cancel)
-
-        buttonBox.accepted.connect(self.remove_selected)
-        buttonBox.rejected.connect(self.reject)
-        
-        # for some reason, self.table.width() returns a number larger than
-        # it should be
-        width = 4*self.table.columnWidth(0)
-        
-        # exaplin how this window works
-        explain = QLabel(wordWrap=True)
-        explain.setMinimumWidth(width)
-        explain.setText('Select rows and click "OK" to remove them from the '
-                        'timesheet.\nThis cannot be undone, so please be '
-                        'careful!')
-        
-        layout = QVBoxLayout()
-        layout.addWidget(explain)
-        layout.addWidget(self.table)
-        layout.addWidget(buttonBox)
-        
-        self.setLayout(layout)
+        self.explain.setText('Select rows and click "OK" to remove them from '
+                             'the timesheet.\nThis cannot be undone, so please '
+                             'be careful!')
         
         self.setWindowTitle('Remove entries')
-        self.resize(width, 400)
         
         
-    def remove_selected(self):
-        """ Remove selected rows from the timesheet. """
-        self.selected = self.table.selectedItems()
-        
-        rows = set(item.row() for item in self.selected)
-        
-        for idx in rows:
-            row = self.csv_data[idx]
-            self.data.csv_data = re.sub(row, '', self.data.csv_data)
-
-        self.accept()
-        
-        
-class EditLineDialog(QDialog):
+class EditLineDialog(TableLineDiaolg):
     
     def __init__(self, data):
         """ Edit lines in the timesheet.
@@ -270,65 +322,37 @@ class EditLineDialog(QDialog):
             data : Data object
                 object which holds all the csv data
         """
-        super().__init__()
+        super().__init__(data)
         
-        self.initUI(data)
+    def customise(self):
         
-    def initUI(self, data):
-        
-        self.data = data
-        
-        # split csv data into list of headers and list of rows of data
-        header, self.csv_data = head_tail(self.data.csv_data)
-
-        # make table
-        self.table = QTableWidget(len(self.csv_data), len(header))
-        # only select rows
-#        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # remove numbers from rows
-        self.table.verticalHeader().setVisible(False)
-        # set headers
-        self.table.setHorizontalHeaderLabels(header)
-
-        # put data in table
-        for row, data in enumerate(self.csv_data):
-            
-            date, dur, act, rate = data.split(',')
-            
-            item0 = QTableWidgetItem(date)
-            item1 = QTableWidgetItem(dur)
-            item2 = QTableWidgetItem(act)
-            item3 = QTableWidgetItem(rate)
-            self.table.setItem(row, 0, item0)
-            self.table.setItem(row, 1, item1)
-            self.table.setItem(row, 2, item2)
-            self.table.setItem(row, 3, item3)
-            
-        
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
-                                     QDialogButtonBox.Cancel)
-
-        buttonBox.accepted.connect(self.accept)
-        buttonBox.rejected.connect(self.reject)
-        
-        # for some reason, self.table.width() returns a number larger than
-        # it should be
-        width = 4*self.table.columnWidth(0)
-        
-        # exaplin how this window works
-        explain = QLabel(wordWrap=True)
-        explain.setMinimumWidth(width)
-        explain.setText('Edit rows in the timesheet.')
-        
-        layout = QVBoxLayout()
-        layout.addWidget(explain)
-        layout.addWidget(self.table)
-        layout.addWidget(buttonBox)
-        
-        self.setLayout(layout)
-        
+        self.explain.setText('Edit rows in the timesheet.')
         self.setWindowTitle('Edit entries')
-        self.resize(width, 400)
+
+    def apply_changes(self):
+        # check every item in the table against the csv data 
+        
+        for row in range(self.num_rows):
+            for col in range(self.num_cols):
+                item = self.table.item(row, col)
+                
+                if item is not None:
+                    pass
+#                    # cast to float/string, as for some reason, items that
+#                    # appear to be the same return False when == is applied
+#                    try:
+#                        t = float(item.text())
+#                        d = float(self.data[row,col])
+#                    except ValueError:
+#                        t = str(item.text())
+#                        d = str(self.data[row,col])
+#                        
+#                    # if item in table is different from item in csv, write
+#                    # to csv
+#                    if t != d:
+#                        self.data[row, col] = t
+#                    
+        self.accept()
         
 
 class NewRateDialog(QDialog):
