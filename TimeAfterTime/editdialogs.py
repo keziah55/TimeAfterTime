@@ -19,7 +19,24 @@ import abc
 datapath = os.path.join(os.path.expanduser('~'), '.timesheets')
 datefmt = '%d %b %Y'
 
-class AddLineDialog(QDialog):
+class QDialog_CTRL_Q(QDialog):
+    """ QDialog subclass with CRTL+Q shortcut to close window.
+    
+        Standard QDialog close shortcut is ESC, which still applies here.
+    """
+    
+    def __init__(self):
+        
+        super().__init__()
+        
+        self.exitAct = QAction("E&xit", self, 
+                               shortcut="CTRL+Q",
+                               statusTip="Exit the application", 
+                               triggered=self.close)
+        self.addAction(self.exitAct)
+        
+
+class AddLineDialog(QDialog_CTRL_Q):
     
     def __init__(self, data):
         """ Add lines to timesheet. 
@@ -190,7 +207,7 @@ class AddLineDialog(QDialog):
         QMessageBox.warning(self, title, message)
         
         
-class TableLineDiaolg(QDialog):
+class TableLineDiaolg(QDialog_CTRL_Q):
     
     __metaclass__ = abc.ABCMeta
     
@@ -273,12 +290,6 @@ class TableLineDiaolg(QDialog):
         self.setLayout(self.layout)
         
         self.setWindowTitle('Table dialog')
-        
-        self.exitAct = QAction("E&xit", self, 
-                               shortcut=QKeySequence(Qt.CTRL + Qt.Key_Q),
-                               statusTip="Exit the application", 
-                               triggered=self.close)
-        self.addAction(self.exitAct)
     
     @abc.abstractmethod    
     def customise(self): pass
@@ -342,7 +353,8 @@ class EditLineDialog(TableLineDiaolg):
         self.setWindowTitle('Edit entries')
 
     def apply_changes(self):
-        # check every item in the table against the csv data 
+        # check every row in the table against the csv data 
+        # if different, overwrite the csv row
         
         for row in range(self.num_rows):
             
@@ -358,7 +370,7 @@ class EditLineDialog(TableLineDiaolg):
         self.accept()
         
 
-class NewRateDialog(QDialog):
+class NewRateDialog(QDialog_CTRL_Q):
     
     def __init__(self, data):
         """ Change the default rate of pay.
