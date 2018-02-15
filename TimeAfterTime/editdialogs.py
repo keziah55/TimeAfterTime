@@ -16,7 +16,7 @@ import os
 import re
 import abc
 
-datapath = os.path.join(os.path.expanduser('~'), '.timesheets')
+datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 datefmt = '%d %b %Y'
 
 class QDialog_CTRL_Q(QDialog):

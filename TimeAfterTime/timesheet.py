@@ -344,7 +344,6 @@ class TimeAfterTime(QMainWindow):
         
         self.editToolBar = self.addToolBar("Edit")
         self.editToolBar.addAction(self.addAct)
-#        self.editToolBar.addAction(self.removeAct)
         self.editToolBar.addAction(self.setRateAct)
 
 
