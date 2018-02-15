@@ -30,14 +30,13 @@ For example, the following adds the October entries in the screenshot above:
 TimeAfterTime will group your hours by month, with most recent at the 
 top. It also displays the total time and pay for that month.
 
-### Editing timesheets
+### Managing timesheets
 
-You can delete entries with the `remove` function.
-Note that TimeAfterTime does not currently have an edit function.
+The Edit menu provides tools to manage the current timesheet; entries
+can be added, removed and edited here.
 
-You can manage multiple timesheets with the options in the File menu 
-and manage the current timesheet with the Edit menu.
-
-You can export the current timesheet as csv with File > Export csv or Ctrl+E.
+You can manage multiple timesheets with the options in the File menu, 
+including  exporting the current timesheet as csv with File > Export csv 
+or Ctrl+E.
 
 
