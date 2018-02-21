@@ -167,6 +167,8 @@ class AddLineDialog(QDialog_CTRL_Q):
         
         self.newData = ''
         
+        error = False
+        
         # get text from every QLineEdit
         for row in self.rows:
             
