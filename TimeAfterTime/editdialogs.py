@@ -261,9 +261,9 @@ class TableLineDiaolg(QDialog_CTRL_Q):
         
         header, self.csv_data = head_tail(self.data.csv_data)
         
-        # display most recent csv_data at top
-        self.csv_data.reverse()
-        
+#        # display most recent csv_data at top
+#        self.csv_data.reverse()
+#        
         self.num_rows = len(self.csv_data)
         self.num_cols = len(header)
 
@@ -275,19 +275,14 @@ class TableLineDiaolg(QDialog_CTRL_Q):
         self.table.setHorizontalHeaderLabels(header)
 
         # put data in table
-        for row, data in enumerate(self.csv_data):
-            
-            date, dur, act, rate = data.split(',')
-            
-            item0 = QTableWidgetItem(date)
-            item1 = QTableWidgetItem(dur)
-            item2 = QTableWidgetItem(act)
-            item3 = QTableWidgetItem(rate)
-            self.table.setItem(row, 0, item0)
-            self.table.setItem(row, 1, item1)
-            self.table.setItem(row, 2, item2)
-            self.table.setItem(row, 3, item3)
-            
+         # put data in table (in reverse order)
+        for row in range(self.nrows):
+            data = self.data[self.nrows-row-1]
+#        for row, data in enumerate(self.csv_data):
+            data = data.split(',')
+            for n, datum in enumerate(data):
+                item = QTableWidgetItem(str(datum))
+                self.table.setItem(row, n, item)          
         
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
                                      QDialogButtonBox.Cancel)
@@ -356,6 +351,7 @@ class RemoveLineDialog(TableLineDiaolg):
         rows = set(item.row() for item in self.selected)
         
         for idx in rows:
+            idx = self.nrows - idx - 1
             row = self.csv_data[idx]
             self.data.csv_data = re.sub(row, '', self.data.csv_data)
             self.data.modified = True
@@ -389,7 +385,9 @@ class EditLineDialog(TableLineDiaolg):
             trow = ','.join([self.table.item(row, col).text() 
                              for col in range(self.num_cols)])
     
-            drow = self.csv_data[row]
+            df_row = self.nrows - row - 1
+    
+            drow = self.csv_data[df_row]
             
             if trow != drow:
                 self.data.csv_data = re.sub(drow, trow, self.data.csv_data)
