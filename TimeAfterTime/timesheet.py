@@ -68,6 +68,8 @@ class Data:
             with open(self.csvfile) as fileobj:
                 self.csv_data = fileobj.read()
                 
+            self.col_names = self.csv_data.split('\n')[0]
+            self.col_names = self.col_names.split(',')
                 
             self.cfg = ConfigParser(self.conffile)
                 
@@ -190,7 +192,7 @@ class TimeAfterTime(QMainWindow):
         
     def addLine(self):
         """ Add line(s) to timesheet. """
-        self.ald = AddLineDialog(self.data)
+        self.ald = AddLineDialog(self.data, self.data.col_names)
         self.ald.show()
         self.ald.accepted.connect(self.update_display)
         

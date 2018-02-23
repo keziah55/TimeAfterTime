@@ -6,9 +6,10 @@ Supplies AddLineDialog, NewRateDialog, and RemoveLineDialog.
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QCompleter, QDialog, 
-                             QDialogButtonBox, QGridLayout, QLabel, QLineEdit, 
-                             QMessageBox, QPushButton, QTableWidget, 
-                             QTableWidgetItem, QVBoxLayout)
+                             QDialogButtonBox, QGridLayout, QGroupBox, 
+                             QHBoxLayout, QLabel, QLineEdit, QMessageBox, 
+                             QPushButton, QTableWidget, QTableWidgetItem, 
+                             QVBoxLayout)
 from str_to_date import str_to_date
 from format_dur import format_duration
 from processcsv import get_unique, head_tail
@@ -38,7 +39,7 @@ class QDialog_CTRL_Q(QDialog):
 
 class AddLineDialog(QDialog_CTRL_Q):
     
-    def __init__(self, data):
+    def __init__(self, data, columnLabels):
         """ Add lines to timesheet. 
             
             Parameters
@@ -46,13 +47,16 @@ class AddLineDialog(QDialog_CTRL_Q):
             
             data : Data object
                 object which holds all the csv data
+                
+            columnLabels : list
+                list of columns headers
         """
         super().__init__()
         
-        self.initUI(data)
+        self.initUI(data, columnLabels)
         
         
-    def initUI(self, data):
+    def initUI(self, data, columnLabels):
         
         # 'data' is the csv/config data object
         self.data = data
@@ -67,14 +71,18 @@ class AddLineDialog(QDialog_CTRL_Q):
         # get words for QCompleter
         self.uniqact = get_unique(self.data.csv_data, 'Activity', False)
         
-        self.newButton = QPushButton(QIcon.fromTheme('list-add'), '')
-        self.newButton.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_N))
-        self.newButton.clicked.connect(self.addLine)
+        editButtonSize = 65
         
-        self.dateLabel = QLabel('Date')
-        self.durLabel = QLabel('Duration')
-        self.actLabel = QLabel('Activity')
-        self.rateLabel = QLabel('Rate') 
+        newButton = QPushButton(QIcon.fromTheme('list-add'), '')
+        newButton.setMinimumWidth(editButtonSize)
+        newButton.setShortcut("CTRL+N")
+        newButton.clicked.connect(self.addLine)
+        
+        # set labels
+        labels = tuple(QLabel(label) for label in columnLabels)
+        
+        # get number of columns
+        self.ncols = len(labels)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
                                      QDialogButtonBox.Cancel)
@@ -82,24 +90,47 @@ class AddLineDialog(QDialog_CTRL_Q):
         buttonBox.accepted.connect(self.set_new_values)
         buttonBox.rejected.connect(self.reject)
 
-        self.layout = QGridLayout()
+        # make GroupBox for new, ok and cancel buttons
+        groupBoxBtn = QGroupBox()
+        # don't draw a frame
+        groupBoxBtn.setFlat(True)
         
+        # make HBoxLayout and add the buttons
+        dialogBtnBox = QHBoxLayout()
+        dialogBtnBox.addWidget(newButton)
+        dialogBtnBox.addWidget(buttonBox)
+        
+        # put the HBox in the GroupBox
+        groupBoxBtn.setLayout(dialogBtnBox)
+        groupBoxBtn.setFixedSize(330,50)
+        
+        # make GroupBox for the line labels and edit boxes
+        groupBoxEdit = QGroupBox()
+        # don't draw a frame
+        groupBoxEdit.setFlat(True)
+        
+        # make GridLayout and add the labels
+        self.editGrid = QGridLayout()
+        # have class member for row, so that new rows can be added on the fly
         self.row = 0
-        
-        self.layout.addWidget(self.newButton, self.row, 0)
-        self.layout.addWidget(buttonBox, self.row, 1)
-        
-        self.row += 1
+        # put labels in Grid
+        for n in range(self.ncols):
+            self.editGrid.addWidget(labels[n], self.row, n)
 
-        self.layout.addWidget(self.dateLabel, self.row, 0)
-        self.layout.addWidget(self.durLabel, self.row, 1)
-        self.layout.addWidget(self.actLabel, self.row, 2)
-        self.layout.addWidget(self.rateLabel, self.row, 3)
+        # put the GridLayout in the GroupBox
+        groupBoxEdit.setLayout(self.editGrid)
+
+        # overall dialog layout is VBox
+        layout = QVBoxLayout()
+        # add the GroupBoxes to the VBox
+        layout.addWidget(groupBoxBtn)
+        layout.addWidget(groupBoxEdit)
         
-        # add lineedit objects
+        # add LineEdit objects
         self.addLine()
         
-        self.setLayout(self.layout)
+        # set the VBox as the layout
+        self.setLayout(layout)
         
         self.setWindowTitle('Add hours')
         
@@ -107,16 +138,12 @@ class AddLineDialog(QDialog_CTRL_Q):
     def makeLine(self):
         """ Make and initialise QLineEdit objects. """
         
-        self.dateEdit = QLineEdit(self)
-        self.durEdit = QLineEdit(self)
-        self.actEdit = QLineEdit(self)
-        self.rateEdit = QLineEdit(self)
+        edits = list(QLineEdit(self) for n in range(self.ncols))
         
         # display today's date and default rate
-        self.dateEdit.setText((str_to_date('').strftime(datefmt)))
-        self.durEdit.setText('')
-        self.actEdit.setText('')
-        self.rateEdit.setText(self.data.rate)
+        # set today's set in the Date column
+        edits[0].setText(str_to_date('').strftime(datefmt))
+        edits[3].setText(self.data.rate)
             
         # make a QCompleter for 'activity' with up-to-date info
         # if last given value of activity isn't in the completer list, add it
@@ -129,9 +156,9 @@ class AddLineDialog(QDialog_CTRL_Q):
                 self.uniqact.append(prev_act)
                 
         # make completer with uniqact for actEdit
-        self.completer(self.uniqact, self.actEdit)
+        self.completer(self.uniqact, edits[2])
 
-        return (self.dateEdit, self.durEdit, self.actEdit, self.rateEdit)
+        return tuple(edits)
             
     def addLine(self):
         """ Add new line to Dialog """
@@ -140,16 +167,13 @@ class AddLineDialog(QDialog_CTRL_Q):
         fields = self.makeLine()
         # keep all rows in a list, so their contents can be accessed
         self.rows.append(fields)
-        # unpack QLineEdits
-        da, du, a, r = fields
         
         # increment row
         self.row += 1
         
-        self.layout.addWidget(da, self.row, 0)
-        self.layout.addWidget(du, self.row, 1)
-        self.layout.addWidget(a, self.row, 2)
-        self.layout.addWidget(r, self.row, 3)
+        for n in range(self.ncols):
+            self.editGrid.addWidget(fields[n], self.row, n)
+            
         
     def completer(self, lst, edit):
         comp = QCompleter(lst)
@@ -159,7 +183,6 @@ class AddLineDialog(QDialog_CTRL_Q):
     def update_completer(self, new, lst, edit):
         if new not in lst:
             lst += new
-            print(lst)
             self.completer(lst, edit)
         
     def set_new_values(self):
