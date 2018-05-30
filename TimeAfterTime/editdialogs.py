@@ -264,11 +264,11 @@ class TableLineDiaolg(QDialog_CTRL_Q):
 #        # display most recent csv_data at top
 #        self.csv_data.reverse()
 #        
-        self.num_rows = len(self.csv_data)
-        self.num_cols = len(header)
+        self.nrows = len(self.csv_data)
+        self.ncols = len(header)
 
         # make table
-        self.table = QTableWidget(self.num_rows, self.num_cols)
+        self.table = QTableWidget(self.nrows, self.ncols)
         # remove numbers from rows
         self.table.verticalHeader().setVisible(False)
         # set headers
@@ -290,12 +290,12 @@ class TableLineDiaolg(QDialog_CTRL_Q):
         buttonBox.accepted.connect(self.apply_changes)
         buttonBox.rejected.connect(self.reject)
         
-        for i in range(self.num_rows):
+        for i in range(self.nrows):
            self.table.setColumnWidth(i, 110)
         
         # for some reason, self.table.width() returns a number larger than
         # it should be
-        width = (self.num_cols + 0.1) * self.table.columnWidth(0)
+        width = (self.ncols + 0.1) * self.table.columnWidth(0)
         
         # exaplin how this window works
         # self.explain.setText() should be applied in the derived classes
@@ -380,10 +380,10 @@ class EditLineDialog(TableLineDiaolg):
         # check every row in the table against the csv data 
         # if different, overwrite the csv row
         
-        for row in range(self.num_rows):
+        for row in range(self.nrows):
             
             trow = ','.join([self.table.item(row, col).text() 
-                             for col in range(self.num_cols)])
+                             for col in range(self.ncols)])
     
             df_row = self.nrows - row - 1
     
