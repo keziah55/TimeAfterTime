@@ -60,7 +60,7 @@ class NewTimesheetDialog(QDialog):
         self.setWindowTitle('New timesheet')
         
         self.name = None
-        self.rate = ''
+        self.rate = None
         
         
     def setName(self, text):
@@ -72,6 +72,11 @@ class NewTimesheetDialog(QDialog):
     def name_message(self):
         title = 'No name provided!'
         message = 'Please provide a name for the new timesheet.'
+        QMessageBox.warning(self, title, message)
+        
+    def rate_message(self):
+        title = 'No rate provided!'
+        message = 'Please provide a default pay rate for the new timesheet.'
         QMessageBox.warning(self, title, message)
         
     def name_error(self):
@@ -87,6 +92,10 @@ another name.'''.format(self.name)
         # if no name has been entered, prompt the user to do so
         if self.name is None:
             self.name_message()
+            
+        # if no rate has been entered, prompt the user to do so
+        elif self.rate is None:
+            self.rate_message()
             
         else:
             self.name = re.sub('\s', '_', self.name)

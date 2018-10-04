@@ -166,7 +166,8 @@ class AddLineDialog(QDialog_CTRL_Q):
         """ Put new csv data into Data object. """
         
         self.newData = ''
-        
+
+        # if there's an error anywhere in the entry, it can't be accepted
         error = False
         
         # get text from every QLineEdit
