@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox,
 
 import os
 import re
-import abc
+from abc import abstractmethod
 import subprocess
 
 datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
@@ -137,8 +137,6 @@ another name.'''.format(self.name)
     
 class TimesheetsFileDialog(QDialog):
     
-    __metaclass__ = abc.ABCMeta
-    
     def __init__(self):
         """ Dialog to select timesheet(s). """
         super().__init__()
@@ -183,7 +181,7 @@ class TimesheetsFileDialog(QDialog):
             
             self.setLayout(layout)
             
-    @abc.abstractmethod
+    @abstractmethod
     def get_selected(self): pass
         
     def none_message(self):
