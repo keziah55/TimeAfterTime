@@ -3,6 +3,61 @@ import re
 import itertools
 import sys
 
+
+def csv_to_html(text, time_base, currency='£'):
+    """ Read given csv file and write html string."""
+    
+    # make time base plural (e.g. days or hours)
+    time_base += 's'
+    
+    html = ''
+    
+    html += get_preamble()
+    
+    if not text.strip():
+        html += get_empty()
+    
+    else:
+        keys, groups = _read_csv(text)
+        
+        for idx, key in enumerate(keys):
+            
+            total_pay = sum(groups[idx][n][1] for n in range(len(groups[idx])))
+            total_pay = '{}{:.2f}'.format(currency, total_pay)
+            
+            if time_base == 'hours': # added an 's' by this point
+                hrs = 0
+                mns = 0
+                for n in range(len(groups[idx])):
+                    dur = groups[idx][n][4]
+                    d = [int(t) for t in dur.split(':')]
+                    hrs += d[0] 
+                    mns += d[1]
+                    
+                hrs += mns // 60
+                mns %= 60
+                
+                total_time = '{}:{:02d}'.format(hrs, mns)
+                
+            else:
+                total_time = 0
+                for n in range(len(groups[idx])):
+                    dur = groups[idx][n][4]
+                    total_time += float(dur)
+                total_time = str(total_time)
+            
+            month = key
+            
+            data = [g[3:] for g in groups[idx]]
+            
+            html += get_header(month, total_pay, total_time, time_base)
+            html += get_table(data, currency=currency)
+                
+    html += get_close()
+    
+    return html
+
+
 def head_tail(text):
     """ Return list of column headers and list of rows of data. """
     
@@ -80,52 +135,6 @@ def get_unique(text, which, case=True):
     return unique
     
 
-def csv_to_html(text, time_base, currency='£'):
-    """ Read given csv file and write html string."""
-    
-    # make time base plural (e.g. days or hours)
-    time_base += 's'
-    
-    html = ''
-    
-    html += get_preamble()
-    
-    if not text.strip():
-        html += get_empty()
-    
-    else:
-        keys, groups = _read_csv(text)
-        
-        for idx, key in enumerate(keys):
-            
-            total_pay = sum(groups[idx][n][1] for n in range(len(groups[idx])))
-            total_pay = '{}{:.2f}'.format(currency, total_pay)
-            
-            hrs = 0
-            mns = 0
-            for n in range(len(groups[idx])):
-                dur = groups[idx][n][4]
-                d = [int(t) for t in dur.split(':')]
-                hrs += d[0] 
-                mns += d[1]
-                
-            hrs += mns // 60
-            mns %= 60
-            
-            total_time = '{}:{:02d}'.format(hrs, mns)
-            
-            month = key
-            
-            data = [g[3:] for g in groups[idx]]
-            
-            html += get_header(month, total_pay, total_time, time_base)
-            html += get_table(data, currency=currency)
-                
-    html += get_close()
-    
-    return html
-
-
 def _parse_line(line):
     """ Take line from csv and extract/reformat where necessary."""
     
@@ -148,8 +157,13 @@ def _parse_line(line):
     
     # work out pay for this entry
     r = float(rate)
-    d = [int(t) for t in dur.split(':')]
-    dur_dec = d[0] + d[1]/60 # duration in decimal
+    # try formating duration as hours...
+    try:
+        d = [int(t) for t in dur.split(':')]
+        dur_dec = d[0] + d[1]/60 # duration in decimal
+    # otherwise, duration is in days
+    except:
+        dur_dec = float(dur)
     pay = r * dur_dec
     
     # two decimal places in rate
@@ -230,7 +244,7 @@ def get_header(monthyear, total_pay, total_time, time_base):
 
     header = '''
 <h1>{}</h1>
-<h2>Time: {} {}{}Pay: {}</h2>
+<h2>Time: {} {};{}Pay: {}</h2>
 '''.format(monthyear, total_time, time_base, 2*space, total_pay)
 
     return header

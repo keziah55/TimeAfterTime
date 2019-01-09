@@ -168,7 +168,7 @@ class AddLineDialog(QDialog_CTRL_Q):
         self.newData = ''
 
         # if there's an error anywhere in the entry, it can't be accepted
-        error = False
+        valid = True
         
         # get text from every QLineEdit
         for row in self.rows:
@@ -181,13 +181,23 @@ class AddLineDialog(QDialog_CTRL_Q):
                 line[0] = str(str_to_date(line[0]))
             except ValueError:
                 self.invalid_value_message(line[0])
-                error = True
+                valid = False
                 
-            try:
-                line[1] = format_duration(line[1])
-            except ValueError:
-                self.invalid_value_message(line[1])
-                error = True
+            # if time base is hours, format the string accordingly
+            if self.data.timebase == 'hour':
+                try:
+                    line[1] = format_duration(line[1])
+                except ValueError:
+                    self.invalid_value_message(line[1])
+                    valid = False
+            # otherwise (time base is days), as long as it can be a float,
+            # everything's fine
+            else:
+                try:
+                    float(line[1])
+                except ValueError:
+                    self.invalid_value_message(line[1])
+                    valid = False
             
             try:
                 line = ','.join(line)
@@ -195,7 +205,7 @@ class AddLineDialog(QDialog_CTRL_Q):
             except TypeError:
                 self.empty_value_message(line)
             
-        if not error:
+        if valid:
             self.data.add_new(self.newData)
             self.accept()
         
