@@ -56,6 +56,7 @@ class Data:
             self.csv_data = ''
             self.name = 'None'
             self.rate = ''
+            self.currency = ''
                        
         else:
             path = os.path.join(datapath, project_name)
@@ -73,9 +74,18 @@ class Data:
                 
             conf_data = self.cfg.read_conf()
             
-            # if Conf_data is not empty...
+            # if conf_data is not empty...
             self.name = conf_data['name']
             self.rate = conf_data['rate']
+            # 'currency' is a new feature, so this line will break old versions
+            # that don't have currency in the config file
+            # In that case, set it to GBP; user can change it, if necessary,
+            # and add it to the config file
+            try:
+                self.currency = conf_data['currency']
+            except KeyError:
+                self.currency = '£'
+                self.cfg.update_conf('currency', self.currency)
             
         
     def add_new(self, new_data):
@@ -88,16 +98,19 @@ class Data:
         if self.modified:
             with open(self.csvfile, 'w') as fileobj:
                 fileobj.write(self.csv_data)
-            
         return True
             
-    @accepts(str)
-    def new_rate(self, rate):
-        """ Set new default rate of pay. """
+    def new_rate(self, value):
+        """ Set new rate of pay. """
         # set new rate and update config file
-        self.rate = rate
-        self.cfg.update_conf('rate', rate)
+        self.rate = str(value)
+        self.cfg.update_conf('rate', self.value)
         
+    def new_currency(self, value):
+        """ Set new currency. """
+        # set new currency and update config file
+        self.currency = str(value)
+        self.cfg.update_conf('currency', self.value)
     
 class TimeAfterTime(QMainWindow):
     
@@ -167,7 +180,7 @@ class TimeAfterTime(QMainWindow):
         
     def update_display(self):
         """ Update text and window title """
-        self.textEdit.setHtml(csv_to_html(self.data.csv_data))
+        self.textEdit.setHtml(csv_to_html(self.data.csv_data, self.data.currency))
         self.setWindowTitle('TimeAfterTime - ' + self.name)
         if self.data.modified:
             self.statusBar().showMessage('Updated', self.statTimeout)

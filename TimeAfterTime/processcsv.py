@@ -80,7 +80,7 @@ def get_unique(text, which, case=True):
     return unique
     
 
-def csv_to_html(text):
+def csv_to_html(text, currency='£'):
     """ Read given csv file and write html string."""
     
     html = ''
@@ -96,7 +96,7 @@ def csv_to_html(text):
         for idx, key in enumerate(keys):
             
             total_pay = sum(groups[idx][n][1] for n in range(len(groups[idx])))
-            total_pay = '£{0:.2f}'.format(total_pay)
+            total_pay = '{}{:.2f}'.format(currency, total_pay)
             
             hrs = 0
             mns = 0
@@ -116,7 +116,7 @@ def csv_to_html(text):
             data = [g[3:] for g in groups[idx]]
             
             html += get_header(month, total_pay, total_time)
-            html += get_table(data)
+            html += get_table(data, currency=currency)
                 
     html += get_close()
     
@@ -233,7 +233,7 @@ def get_header(monthyear, total_pay, total_time):
     return header
 
 
-def get_table(data):
+def get_table(data, currency):
     
     table_head = '''
 <table>
@@ -241,8 +241,8 @@ def get_table(data):
         <th>Date</th>
         <th>Duration</th>
         <th>Activity</th>
-        <th>Rate (£)</th>
-    </tr>'''
+        <th>Rate ({})</th>
+    </tr>'''.format(currency)
     
     table_body = ''
     for row in data:

@@ -48,13 +48,19 @@ class ConfigParser:
     
     def update_conf(self, key, value):
         """ Change the current value of `key` to `value` in internal data and
-            write to file. """
+            write to file. 
+            
+            If `key` does not currently exist in the file, add it.
+        """
         
         # replace key=old_value with key=value
         pattern = key + ' *= *.+'
         repl = key + '=' + value
         
-        self.text = re.sub(pattern, repl, self.text)
+        if re.search(pattern, self.text):
+            self.text = re.sub(pattern, repl, self.text)
+        else:
+            self.text += repl + '\n'
         
         # get updated lines
         self._get_lines()
