@@ -77,15 +77,20 @@ class Data:
             # if conf_data is not empty...
             self.name = conf_data['name']
             self.rate = conf_data['rate']
-            # 'currency' is a new feature, so this line will break old versions
-            # that don't have currency in the config file
-            # In that case, set it to GBP; user can change it, if necessary,
-            # and add it to the config file
+            # 'currency' and 'timebase' are a new features, so attempting to
+            # read them from the config will fail first time for old versions
+            # In that case, set it to defaults; user can change them, if 
+            # necessary, and add them to the config file
             try:
                 self.currency = conf_data['currency']
             except KeyError:
                 self.currency = '£'
                 self.cfg.update_conf('currency', self.currency)
+            try:
+                self.timebase = conf_data['timebase']
+            except KeyError:
+                self.timebase = 'hour'
+                self.cfg.update_conf('timebase', self.timebase)
             
         
     def add_new(self, new_data):
@@ -111,6 +116,13 @@ class Data:
         # set new currency and update config file
         self.currency = str(value)
         self.cfg.update_conf('currency', self.value)
+        
+    def new_timebase(self, value):
+        """ Set new timebase. """
+        # set new timebase and update config file
+        self.timebase = str(value)
+        self.cfg.update_conf('timebase', self.value)
+    
     
 class TimeAfterTime(QMainWindow):
     

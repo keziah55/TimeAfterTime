@@ -8,19 +8,8 @@ import re
 class ConfigParser:
     
     def __init__(self, filename):
-        
         self.filename = filename
         
-#        # read text from file
-#        try:
-#            with open(self.filename) as fileobj:
-#                self.text = fileobj.read()
-#        except FileNotFoundError:
-#            raise FileNotFoundError
-#            
-#        # split text into non-empty, non-commented lines
-#        self._get_lines()
-
 
     def read_conf(self):
         """ Get dictionary of key:value pairs from conf file. """
@@ -57,8 +46,10 @@ class ConfigParser:
         pattern = key + ' *= *.+'
         repl = key + '=' + value
         
+        # if 'key' already exists in the text, replace old with new
         if re.search(pattern, self.text):
             self.text = re.sub(pattern, repl, self.text)
+        # otherwise, insert new key
         else:
             self.text += repl + '\n'
         
@@ -70,7 +61,6 @@ class ConfigParser:
         
     def _write_conf(self):
         """ Write config file with data currently held. """
-        
         with open(self.filename, 'w') as fileobj:
             fileobj.write(self.text)
         
