@@ -392,11 +392,13 @@ class NewRateDialog(QDialog_CTRL_Q):
         
         self.data = data
         
+        # rate of pay
         self.rateLabel = QLabel('Default rate of pay:')
         self.rateEdit = QLineEdit(self)
         self.rateEdit.setText(self.data.rate)
         self.rateEdit.selectAll()
         
+        # time base
         self.timeLabel = QLabel('per')
         self.dayButton = QRadioButton('day')
         self.hourButton = QRadioButton('hour')
@@ -407,6 +409,11 @@ class NewRateDialog(QDialog_CTRL_Q):
         # else, default to day
         else:
             self.dayButton.setChecked(True)
+        
+        # currency
+        self.currencyLabel = QLabel('Currency:')
+        self.currencyEdit = QLineEdit(self)
+        self.currencyEdit.setText(self.data.currency)
         
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
                                      QDialogButtonBox.Cancel)
@@ -425,6 +432,10 @@ class NewRateDialog(QDialog_CTRL_Q):
         layout.addWidget(self.hourButton, row, 4)
         
         row += 1
+        layout.addWidget(self.currencyLabel, row, 0)
+        layout.addWidget(self.currencyEdit, row, 1)
+        
+        row += 1
         layout.addWidget(buttonBox, row, 0)
  
         self.setLayout(layout)
@@ -433,10 +444,38 @@ class NewRateDialog(QDialog_CTRL_Q):
 
         
     def saveChanges(self):
-        self.data.new_rate(self.rateEdit.text())
+        # apply changes to Data object; raise error message if there is invalid
+        # data in 'rate' or 'currency'
+        
+        valid = True
+        
+        # set rate
+        rate = self.rateEdit.text().strip()
+        if rate:
+            self.data.new_rate(rate)
+        else:
+            self.error_message('rate of pay')
+            valid = False
+            
+        # set time base
         if self.dayButton.isChecked():
             self.data.new_timebase('day')
         else:
             self.data.new_timebase('hour')
-        self.accept()
+            
+        # set currency
+        curr = self.currencyEdit.text().strip()
+        if curr:
+            self.data.new_currency(curr)
+        else:
+            self.error_message('currency')
+            valid = False
+            
+        if valid:
+            self.accept()
+        
+    def error_message(self, which):
+        title = 'No {} provided!'.format(which)
+        message = 'Please provide a {} for the new timesheet.'.format(which)
+        QMessageBox.warning(self, title, message)
         

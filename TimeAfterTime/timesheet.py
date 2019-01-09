@@ -192,7 +192,8 @@ class TimeAfterTime(QMainWindow):
         
     def update_display(self):
         """ Update text and window title """
-        self.textEdit.setHtml(csv_to_html(self.data.csv_data, self.data.currency))
+        self.textEdit.setHtml(csv_to_html(self.data.csv_data, 
+                                          self.data.currency))
         self.setWindowTitle('TimeAfterTime - ' + self.name)
         if self.data.modified:
             self.statusBar().showMessage('Updated', self.statTimeout)
@@ -291,6 +292,7 @@ class TimeAfterTime(QMainWindow):
         # rate is saved to Data in NewRateDialog
         self.nrd = NewRateDialog(self.data)
         self.nrd.show()
+        self.nrd.accepted.connect(self.update_display)
     
     def createActions(self):
                     
