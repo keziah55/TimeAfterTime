@@ -72,7 +72,7 @@ class AddLineDialog(QDialog_CTRL_Q):
         self.newButton.clicked.connect(self.addLine)
         
         self.dateLabel = QLabel('Date')
-        self.durLabel = QLabel('Duration')
+        self.durLabel = QLabel('Duration ({})'.format(self.data.timebase+'s'))
         self.actLabel = QLabel('Activity')
         self.rateLabel = QLabel('Rate') 
 
