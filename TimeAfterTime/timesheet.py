@@ -193,6 +193,7 @@ class TimeAfterTime(QMainWindow):
     def update_display(self):
         """ Update text and window title """
         self.textEdit.setHtml(csv_to_html(self.data.csv_data, 
+                                          self.data.timebase,
                                           self.data.currency))
         self.setWindowTitle('TimeAfterTime - ' + self.name)
         if self.data.modified:
