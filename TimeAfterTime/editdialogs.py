@@ -7,8 +7,8 @@ from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QCompleter, QDialog, 
                              QDialogButtonBox, QGridLayout, QLabel, QLineEdit, 
-                             QMessageBox, QPushButton, QTableWidget, 
-                             QTableWidgetItem, QVBoxLayout)
+                             QMessageBox, QPushButton, QRadioButton,  
+                             QTableWidget, QTableWidgetItem, QVBoxLayout)
 from str_to_date import str_to_date
 from format_dur import format_duration
 from processcsv import get_unique, head_tail
@@ -392,15 +392,26 @@ class NewRateDialog(QDialog_CTRL_Q):
         
         self.data = data
         
-        self.rateLabel = QLabel('Default rate (£):')
+        self.rateLabel = QLabel('Default rate of pay:')
         self.rateEdit = QLineEdit(self)
         self.rateEdit.setText(self.data.rate)
         self.rateEdit.selectAll()
         
+        self.timeLabel = QLabel('per')
+        self.dayButton = QRadioButton('day')
+        self.hourButton = QRadioButton('hour')
+        
+        # if timebase is already set, check the right button
+        if self.data.timebase == 'hour':
+            self.hourButton.setChecked(True)
+        # else, default to day
+        else:
+            self.dayButton.setChecked(True)
+        
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
                                      QDialogButtonBox.Cancel)
 
-        buttonBox.accepted.connect(self.saveRate)
+        buttonBox.accepted.connect(self.saveChanges)
         buttonBox.rejected.connect(self.reject)
 
         layout = QGridLayout()
@@ -409,16 +420,23 @@ class NewRateDialog(QDialog_CTRL_Q):
         row = 0
         layout.addWidget(self.rateLabel, row, 0)
         layout.addWidget(self.rateEdit, row, 1)
+        layout.addWidget(self.timeLabel, row, 2)
+        layout.addWidget(self.dayButton, row, 3)
+        layout.addWidget(self.hourButton, row, 4)
         
         row += 1
-        layout.addWidget(buttonBox, row, 1)
+        layout.addWidget(buttonBox, row, 0)
  
         self.setLayout(layout)
         
-        self.setWindowTitle('Set default rate')
+        self.setWindowTitle('Set default rate of pay')
 
         
-    def saveRate(self):
+    def saveChanges(self):
         self.data.new_rate(self.rateEdit.text())
+        if self.dayButton.isChecked():
+            self.data.new_timebase('day')
+        else:
+            self.data.new_timebase('hour')
         self.accept()
         

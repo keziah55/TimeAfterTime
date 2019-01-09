@@ -109,19 +109,19 @@ class Data:
         """ Set new rate of pay. """
         # set new rate and update config file
         self.rate = str(value)
-        self.cfg.update_conf('rate', self.value)
+        self.cfg.update_conf('rate', str(value))
         
     def new_currency(self, value):
         """ Set new currency. """
         # set new currency and update config file
         self.currency = str(value)
-        self.cfg.update_conf('currency', self.value)
+        self.cfg.update_conf('currency', str(value))
         
     def new_timebase(self, value):
         """ Set new timebase. """
         # set new timebase and update config file
         self.timebase = str(value)
-        self.cfg.update_conf('timebase', self.value)
+        self.cfg.update_conf('timebase', str(value))
     
     
 class TimeAfterTime(QMainWindow):
@@ -330,8 +330,9 @@ class TimeAfterTime(QMainWindow):
                 triggered=self.editEntries)
         
         self.setRateAct = QAction(QIcon.fromTheme('preferences-system'), 
-                "Set rate", self, shortcut=QKeySequence("R"), 
-                statusTip="Set hourly rate", triggered=self.setRate)
+                "Set rate of pay", self, shortcut=QKeySequence("R"), 
+                statusTip="Set rate of pay and time base", 
+                triggered=self.setRate)
         
         self.deleteAct = QAction("Delete", self,
                 shortcut="Ctrl+D", statusTip="Delete timesheet",
