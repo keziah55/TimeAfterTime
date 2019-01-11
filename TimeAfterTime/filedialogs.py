@@ -92,10 +92,12 @@ another name.'''.format(self.name)
         # if no name has been entered, prompt the user to do so
         if self.name is None:
             self.name_message()
+            # break or something? valid flag?
             
         # if no rate has been entered, prompt the user to do so
-        elif self.rate is None:
+        if self.rate is None:
             self.rate_message()
+            # break or something? valid flag?
             
         else:
             self.name = re.sub('\s', '_', self.name)
@@ -125,7 +127,7 @@ another name.'''.format(self.name)
                 # and reset dialog
                 self.initUI()
 
-    # din't think these are actually used - now part of Data
+    # don't think these are actually used - now part of Data
     @property 
     def csvname(self):
         return self.new_csv

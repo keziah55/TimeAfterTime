@@ -8,8 +8,10 @@ import re
 class ConfigParser:
     
     def __init__(self, filename):
-        self.filename = filename
+        self.setFilename(filename)
         
+    def setFilename(self, filename):
+        self.filename = filename
 
     def read_conf(self):
         """ Get dictionary of key:value pairs from conf file. """

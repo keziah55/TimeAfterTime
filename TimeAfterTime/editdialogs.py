@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QCompleter, QDialog,
                              QDialogButtonBox, QGridLayout, QLabel, QLineEdit, 
                              QMessageBox, QPushButton, QRadioButton,  
                              QTableWidget, QTableWidgetItem, QVBoxLayout)
+from configdialogs import ConfigDataDialog
 from str_to_date import str_to_date
 from format_dur import format_duration
 from processcsv import get_unique, head_tail
@@ -383,86 +384,23 @@ class EditLineDialog(TableLineDiaolg):
             
         self.accept()
         
-
-class NewRateDialog(QDialog_CTRL_Q):
-    
-    def __init__(self, data):
-        """ Change the default rate of pay.
         
-            Parameters
-            ----------
-            data : Data object
-                object which holds all the csv data
-        """
-        super().__init__()
         
-        self.initUI(data)
-        
-    def initUI(self, data):
-        
-        self.data = data
-        
-        # rate of pay
-        rateLabel = QLabel('Default rate of pay:')
-        rateLabel.setAlignment(Qt.AlignRight)
-        self.rateEdit = QLineEdit(self)
-        self.rateEdit.setText(self.data.rate)
-        self.rateEdit.selectAll()
-        
-        # time base
-        timeLabel = QLabel('per')
-        self.dayButton = QRadioButton('day')
-        self.hourButton = QRadioButton('hour')
-        
-        # if timebase is already set, check the right button
-        if self.data.timebase == 'hour':
-            self.hourButton.setChecked(True)
-        # else, default to day
-        else:
-            self.dayButton.setChecked(True)
-            
-        radioLayout = QVBoxLayout()
-        radioLayout.addWidget(self.dayButton)
-        radioLayout.addWidget(self.hourButton)
-        
-        # currency
-        currencyLabel = QLabel('Currency:')
-        currencyLabel.setAlignment(Qt.AlignRight)
-        self.currencyEdit = QLineEdit(self)
-        self.currencyEdit.setText(self.data.currency)
-        
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
-                                     QDialogButtonBox.Cancel)
-
-        buttonBox.accepted.connect(self.saveChanges)
-        buttonBox.rejected.connect(self.reject)
-
-        editLayout = QGridLayout()
-        
-        row = 0
-        editLayout.addWidget(rateLabel, row, 0)
-        editLayout.addWidget(self.rateEdit, row, 1)
-        editLayout.addWidget(timeLabel, row, 2)
-        editLayout.addLayout(radioLayout, row, 3)
-        
-        row += 1
-        editLayout.addWidget(currencyLabel, row, 0)
-        editLayout.addWidget(self.currencyEdit, row, 1)
-        
-        layout = QVBoxLayout()
-        layout.addLayout(editLayout)
-        layout.addWidget(buttonBox)
- 
-        self.setLayout(layout)
-        
-        self.setWindowTitle('Set default rate of pay')
-
-        
-    def saveChanges(self):
+class NewRateDialog(ConfigDataDialog):
+    def okClicked(self):
         # apply changes to Data object; raise error message if there is invalid
         # data in 'rate' or 'currency'
         
         valid = True
+        
+        # set name
+        # also check if name already exists and raise name_error()
+        name = self.nameEdit.text().strip()
+        if name:
+            self.data.new_name(name)
+        else:
+            self.error_message('name')
+            valid = False
         
         # set rate
         rate = self.rateEdit.text().strip()
@@ -488,10 +426,115 @@ class NewRateDialog(QDialog_CTRL_Q):
             
         if valid:
             self.accept()
-            
-        
-    def error_message(self, which):
-        title = 'No {} provided!'.format(which)
-        message = 'Please provide a {} for the new timesheet.'.format(which)
-        QMessageBox.warning(self, title, message)
+
+#class NewRateDialog(QDialog_CTRL_Q):
+#    
+#    def __init__(self, data):
+#        """ Change the default rate of pay.
+#        
+#            Parameters
+#            ----------
+#            data : Data object
+#                object which holds all the csv data
+#        """
+#        super().__init__()
+#        
+#        self.initUI(data)
+#        
+#    def initUI(self, data):
+#        
+#        self.data = data
+#        
+#        # rate of pay
+#        rateLabel = QLabel('Default rate of pay:')
+#        rateLabel.setAlignment(Qt.AlignRight)
+#        self.rateEdit = QLineEdit(self)
+#        self.rateEdit.setText(self.data.rate)
+#        self.rateEdit.selectAll()
+#        
+#        # time base
+#        timeLabel = QLabel('per')
+#        self.dayButton = QRadioButton('day')
+#        self.hourButton = QRadioButton('hour')
+#        
+#        # if timebase is already set, check the right button
+#        if self.data.timebase == 'hour':
+#            self.hourButton.setChecked(True)
+#        # else, default to day
+#        else:
+#            self.dayButton.setChecked(True)
+#            
+#        radioLayout = QVBoxLayout()
+#        radioLayout.addWidget(self.dayButton)
+#        radioLayout.addWidget(self.hourButton)
+#        
+#        # currency
+#        currencyLabel = QLabel('Currency:')
+#        currencyLabel.setAlignment(Qt.AlignRight)
+#        self.currencyEdit = QLineEdit(self)
+#        self.currencyEdit.setText(self.data.currency)
+#        
+#        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+#                                     QDialogButtonBox.Cancel)
+#
+#        buttonBox.accepted.connect(self.saveChanges)
+#        buttonBox.rejected.connect(self.reject)
+#
+#        editLayout = QGridLayout()
+#        
+#        row = 0
+#        editLayout.addWidget(rateLabel, row, 0)
+#        editLayout.addWidget(self.rateEdit, row, 1)
+#        editLayout.addWidget(timeLabel, row, 2)
+#        editLayout.addLayout(radioLayout, row, 3)
+#        
+#        row += 1
+#        editLayout.addWidget(currencyLabel, row, 0)
+#        editLayout.addWidget(self.currencyEdit, row, 1)
+#        
+#        layout = QVBoxLayout()
+#        layout.addLayout(editLayout)
+#        layout.addWidget(buttonBox)
+# 
+#        self.setLayout(layout)
+#        
+#        self.setWindowTitle('Set default rate of pay')
+#
+#        
+#    def saveChanges(self):
+#        # apply changes to Data object; raise error message if there is invalid
+#        # data in 'rate' or 'currency'
+#        
+#        valid = True
+#        
+#        # set rate
+#        rate = self.rateEdit.text().strip()
+#        if rate:
+#            self.data.new_rate(rate)
+#        else:
+#            self.error_message('rate of pay')
+#            valid = False
+#            
+#        # set time base
+#        if self.dayButton.isChecked():
+#            self.data.new_timebase('day')
+#        else:
+#            self.data.new_timebase('hour')
+#            
+#        # set currency
+#        curr = self.currencyEdit.text().strip()
+#        if curr:
+#            self.data.new_currency(curr)
+#        else:
+#            self.error_message('currency')
+#            valid = False
+#            
+#        if valid:
+#            self.accept()
+#            
+#        
+#    def error_message(self, which):
+#        title = 'No {} provided!'.format(which)
+#        message = 'Please provide a {} for the new timesheet.'.format(which)
+#        QMessageBox.warning(self, title, message)
         

@@ -12,6 +12,7 @@ from editdialogs import (AddLineDialog, NewRateDialog, RemoveLineDialog,
                          EditLineDialog)
 from filedialogs import (NewTimesheetDialog, OpenTimesheetDialog, 
                          DeleteTimesheetDialog)
+#from configdialogs import ConfigDataDialog
 from processcsv import csv_to_html
 from readconfig import ConfigParser
 
@@ -24,24 +25,6 @@ def check_path():
         os.mkdir(datapath)
         with open(conffile, 'w') as fileobj:
             fileobj.write('last=None\n')
-
-# type checking decorator
-def accepts(t):
-    def wrap(func):
-        def inner(*args):
-            if not isinstance(args[1], t):
-                try:
-                    len(t)
-                    types_str = ', '.join([typ.__name__ for typ in t])
-                except TypeError:
-                    types_str = t.__name__
-                raise TypeError('"{}" takes {}'.format(func.__name__, 
-                                types_str))
-            else:
-                r = func(*args)
-            return r
-        return inner
-    return wrap
 
 
 class Data:
@@ -58,13 +41,8 @@ class Data:
             self.rate = ''
             self.currency = ''
                        
-        else:
-            path = os.path.join(datapath, project_name)
-            
-            file = 'ts_' + project_name.lower()
-            
-            self.csvfile, self.conffile = (os.path.join(path, file+ext) 
-                                           for ext in ('.csv', '.conf'))
+        else:            
+            self.csvfile, self.conffile = self.getCsvConfFiles(project_name)
             
             with open(self.csvfile) as fileobj:
                 self.csv_data = fileobj.read()
@@ -91,6 +69,15 @@ class Data:
             except KeyError:
                 self.timebase = 'hour'
                 self.cfg.update_conf('timebase', self.timebase)
+                
+                
+    @staticmethod
+    def getCsvConfFiles(project_name):
+        path = os.path.join(datapath, project_name)
+        file = 'ts_' + project_name.lower()
+        exts = ('.csv', '.conf')
+        csvfile, conffile = (os.path.join(path, file+ext) for ext in exts)
+        return csvfile, conffile
             
         
     def add_new(self, new_data):
@@ -104,6 +91,36 @@ class Data:
             with open(self.csvfile, 'w') as fileobj:
                 fileobj.write(self.csv_data)
         return True
+    
+    
+    def new_name(self, value):
+        """ Set new timesheet name. """
+        
+        # rename directory in .timeaftertime
+        current_path = os.path.join(datapath, self.name)
+        new_path = os.path.join(datapath, str(value))
+        os.rename(current_path, new_path)
+        
+        # store new name variable
+        self.name = str(value)
+        
+        # get new paths to csvfile and conffile
+        _, current_csv = os.path.split(self.csvfile)
+        _, current_conf = os.path.split(self.conffile)
+        
+        current_csv = os.path.join(new_path, current_csv)
+        current_conf = os.path.join(new_path, current_conf)
+        
+        self.csvfile, self.conffile = self.getCsvConfFiles(self.name)
+        
+        os.rename(current_csv, self.csvfile)
+        os.rename(current_conf, self.conffile)
+        
+        # set new path for cfg
+        self.cfg.setFilename(self.conffile)
+        # update config data
+        self.cfg.update_conf('name', str(value))
+
             
     def new_rate(self, value):
         """ Set new rate of pay. """
@@ -141,7 +158,7 @@ class TimeAfterTime(QMainWindow):
         self.get_last_opened()
             
         # get timesheet name
-        self.name = self.data.name
+        self.name = None #self.data.name
 
         self.textEdit = QTextEdit(readOnly=True)
         
@@ -192,12 +209,18 @@ class TimeAfterTime(QMainWindow):
         
     def update_display(self):
         """ Update text and window title """
+        self.updateName()
         self.textEdit.setHtml(csv_to_html(self.data.csv_data, 
                                           self.data.timebase,
                                           self.data.currency))
         self.setWindowTitle('TimeAfterTime - ' + self.name)
         if self.data.modified:
             self.statusBar().showMessage('Updated', self.statTimeout)
+            
+            
+    def updateName(self):
+        if self.name != self.data.name:
+            self.name = self.data.name
 
     def newTimesheet(self):
         """ Make a new timesheet. """
