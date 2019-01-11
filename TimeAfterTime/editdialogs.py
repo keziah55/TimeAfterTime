@@ -403,13 +403,14 @@ class NewRateDialog(QDialog_CTRL_Q):
         self.data = data
         
         # rate of pay
-        self.rateLabel = QLabel('Default rate of pay:')
+        rateLabel = QLabel('Default rate of pay:')
+        rateLabel.setAlignment(Qt.AlignRight)
         self.rateEdit = QLineEdit(self)
         self.rateEdit.setText(self.data.rate)
         self.rateEdit.selectAll()
         
         # time base
-        self.timeLabel = QLabel('per')
+        timeLabel = QLabel('per')
         self.dayButton = QRadioButton('day')
         self.hourButton = QRadioButton('hour')
         
@@ -419,9 +420,14 @@ class NewRateDialog(QDialog_CTRL_Q):
         # else, default to day
         else:
             self.dayButton.setChecked(True)
+            
+        radioLayout = QVBoxLayout()
+        radioLayout.addWidget(self.dayButton)
+        radioLayout.addWidget(self.hourButton)
         
         # currency
-        self.currencyLabel = QLabel('Currency:')
+        currencyLabel = QLabel('Currency:')
+        currencyLabel.setAlignment(Qt.AlignRight)
         self.currencyEdit = QLineEdit(self)
         self.currencyEdit.setText(self.data.currency)
         
@@ -431,22 +437,21 @@ class NewRateDialog(QDialog_CTRL_Q):
         buttonBox.accepted.connect(self.saveChanges)
         buttonBox.rejected.connect(self.reject)
 
-        layout = QGridLayout()
-        layout.setColumnStretch(1, 1)
+        editLayout = QGridLayout()
         
         row = 0
-        layout.addWidget(self.rateLabel, row, 0)
-        layout.addWidget(self.rateEdit, row, 1)
-        layout.addWidget(self.timeLabel, row, 2)
-        layout.addWidget(self.dayButton, row, 3)
-        layout.addWidget(self.hourButton, row, 4)
+        editLayout.addWidget(rateLabel, row, 0)
+        editLayout.addWidget(self.rateEdit, row, 1)
+        editLayout.addWidget(timeLabel, row, 2)
+        editLayout.addLayout(radioLayout, row, 3)
         
         row += 1
-        layout.addWidget(self.currencyLabel, row, 0)
-        layout.addWidget(self.currencyEdit, row, 1)
+        editLayout.addWidget(currencyLabel, row, 0)
+        editLayout.addWidget(self.currencyEdit, row, 1)
         
-        row += 1
-        layout.addWidget(buttonBox, row, 0)
+        layout = QVBoxLayout()
+        layout.addLayout(editLayout)
+        layout.addWidget(buttonBox)
  
         self.setLayout(layout)
         
@@ -483,6 +488,7 @@ class NewRateDialog(QDialog_CTRL_Q):
             
         if valid:
             self.accept()
+            
         
     def error_message(self, which):
         title = 'No {} provided!'.format(which)
