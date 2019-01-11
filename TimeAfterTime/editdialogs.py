@@ -387,6 +387,7 @@ class EditLineDialog(TableLineDiaolg):
         
         
 class NewRateDialog(ConfigDataDialog):
+    
     def okClicked(self):
         # apply changes to Data object; raise error message if there is invalid
         # data in 'rate' or 'currency'
@@ -394,10 +395,15 @@ class NewRateDialog(ConfigDataDialog):
         valid = True
         
         # set name
-        # also check if name already exists and raise name_error()
         name = self.nameEdit.text().strip()
+        # if name is valid
         if name:
-            self.data.new_name(name)
+            # if there is already a timesheet with this name, raise an error
+            if not self.check_name(name):
+                self.name_error(name)
+                valid = False
+            else:
+                self.data.new_name(name)
         else:
             self.error_message('name')
             valid = False

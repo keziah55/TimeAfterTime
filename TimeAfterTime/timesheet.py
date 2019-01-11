@@ -15,6 +15,7 @@ from filedialogs import (NewTimesheetDialog, OpenTimesheetDialog,
 #from configdialogs import ConfigDataDialog
 from processcsv import csv_to_html
 from readconfig import ConfigParser
+import re
 
 datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 conffile = os.path.join(datapath, 'timeaftertime.conf')
@@ -96,17 +97,21 @@ class Data:
     def new_name(self, value):
         """ Set new timesheet name. """
         
+        value = re.sub('\s', '_', str(value))
+        
         # rename directory in .timeaftertime
         current_path = os.path.join(datapath, self.name)
-        new_path = os.path.join(datapath, str(value))
+        new_path = os.path.join(datapath, value)
         os.rename(current_path, new_path)
         
         # store new name variable
-        self.name = str(value)
+        self.name = value
         
+        # store and update file names
         current_files = (self.csvfile, self.conffile)
         new_files = self.getCsvConfFiles(self.name)
         
+        # rename the csv and conffiles
         for n in range(len(current_files)):
             file = current_files[n]
             new = new_files[n]
@@ -114,12 +119,13 @@ class Data:
             current = os.path.join(new_path, current)
             os.rename(current, new)
             
+        # store new file names
         self.csvfile, self.conffile = new_files
         
         # set new path for cfg
         self.cfg.setFilename(self.conffile)
         # update config data
-        self.cfg.update_conf('name', str(value))
+        self.cfg.update_conf('name', self.name)
 
             
     def new_rate(self, value):

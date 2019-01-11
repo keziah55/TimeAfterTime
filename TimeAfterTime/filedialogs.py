@@ -6,7 +6,7 @@ OpenTimesheetDialog and DeleteTimesheetDialog).
 from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, 
                              QGridLayout, QLabel, QLineEdit,  QListWidget, 
                              QListWidgetItem, QMessageBox, QVBoxLayout)
-
+from configdialogs import ConfigDataDialog
 import os
 import re
 from abc import abstractmethod
@@ -14,100 +14,56 @@ import subprocess
 
 datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 
-class NewTimesheetDialog(QDialog):
+class NewTimesheetDialog(ConfigDataDialog):
     
-    def __init__(self):
-        """ Make a new timesheet. """
-        super().__init__()
-        
-        self.initUI()
-        
-        
-    def initUI(self):
-        
-        # get name and default rate for the new timesheet        
-        self.nameLabel = QLabel('Timesheet name:')
-        self.nameEdit = QLineEdit(self)
-        
-        self.rateLabel = QLabel('Default rate:')
-        self.rateEdit = QLineEdit(self)
-        
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
-                                     QDialogButtonBox.Cancel)
-
-        buttonBox.accepted.connect(self.make_new)
-        buttonBox.rejected.connect(self.reject)
-
-        self.nameEdit.textChanged[str].connect(self.setName)
-        self.rateEdit.textChanged[str].connect(self.setRate)
-
-        layout = QGridLayout()
-        layout.setColumnStretch(1, 1)
-
-        row = 0
-        layout.addWidget(self.nameLabel, row, 0)
-        layout.addWidget(self.nameEdit, row, 1)
-        
-        row += 1
-        layout.addWidget(self.rateLabel, row, 0)
-        layout.addWidget(self.rateEdit, row, 1)
-        
-        row += 1
-        layout.addWidget(buttonBox, row, 1)
- 
-        self.setLayout(layout)
-        
-        self.setWindowTitle('New timesheet')
-        
-        self.name = None
-        self.rate = None
-        
-        
-    def setName(self, text):
-        self.name = text
-        
-    def setRate(self, text):
-        self.rate = text
-        
-    def name_message(self):
-        title = 'No name provided!'
-        message = 'Please provide a name for the new timesheet.'
-        QMessageBox.warning(self, title, message)
-        
-    def rate_message(self):
-        title = 'No rate provided!'
-        message = 'Please provide a default pay rate for the new timesheet.'
-        QMessageBox.warning(self, title, message)
-        
-    def name_error(self):
-        title = 'Timesheet already exists!'
-        message = '''There is already a timesheet called "{}". Please provide 
-another name.'''.format(self.name)
-        QMessageBox.critical(self, title, message)
-        
-        
-    def make_new(self):
+    def okClicked(self):
         """ Make new timesheet."""
         
-        # if no name has been entered, prompt the user to do so
-        if self.name is None:
-            self.name_message()
-            # break or something? valid flag?
-            
-        # if no rate has been entered, prompt the user to do so
-        if self.rate is None:
-            self.rate_message()
-            # break or something? valid flag?
-            
+        valid = True
+        
+        # raise errors if name, rate or currency are empty, or if name already
+        # exists
+        # check name...
+        name = self.nameEdit.text().strip()
+        name = re.sub('\s', '_', name)
+        if name:
+            # if there is already a timesheet with this name, raise an error
+            if not self.check_name(name):
+                self.name_error(name)
+                valid = False
+            # needs name attribute, so that timesheet can make the data object
+            # and read the csv
+            self.name = name
         else:
-            self.name = re.sub('\s', '_', self.name)
-            path = os.path.join(datapath, self.name)
+            self.error_message('name')
+            valid = False
+            
+        # check rate...
+        rate = self.rateEdit.text().strip()
+        if not rate:
+            self.error_message('rate of pay')
+            valid = False
+            
+        # check currency...
+        curr = self.currencyEdit.text().strip()
+        if not curr:
+            self.error_message('currency')
+            valid = False
+            
+        # get time base
+        if self.dayButton.isChecked():
+            timebase = 'day'
+        else:
+            timebase = 'hour'
+            
+        if valid:
+            path = os.path.join(datapath, name)
             
             try:
                 # if name does not already exist, make csv and config files
                 os.mkdir(path)
                 
-                base = 'ts_'+self.name.lower()
+                base = 'ts_' + name.lower()
                 
                 self.new_csv  = os.path.join(path, base+'.csv')
                 self.new_conf = os.path.join(path, base+'.conf')
@@ -116,7 +72,8 @@ another name.'''.format(self.name)
                     fileobj.write('Date,Duration,Activity,Rate\n')
                     
                 with open(self.new_conf, 'w') as fileobj:
-                    text = 'name={}\nrate={}\n'.format(self.name, self.rate)
+                    text = ('name={}\nrate={}\ncurrency={}\ntimebase={}\n'
+                            .format(name, rate, curr, timebase))
                     fileobj.write(text)
             
                 self.accept()
@@ -126,15 +83,127 @@ another name.'''.format(self.name)
                 self.name_error()
                 # and reset dialog
                 self.initUI()
-
-    # don't think these are actually used - now part of Data
-    @property 
-    def csvname(self):
-        return self.new_csv
+        
     
-    @property 
-    def confname(self):
-        return self.new_conf
+#    def __init__(self):
+#        """ Make a new timesheet. """
+#        super().__init__()
+#        
+#        self.initUI()
+#        
+#        
+#    def initUI(self):
+#        
+#        # get name and default rate for the new timesheet        
+#        self.nameLabel = QLabel('Timesheet name:')
+#        self.nameEdit = QLineEdit(self)
+#        
+#        self.rateLabel = QLabel('Default rate:')
+#        self.rateEdit = QLineEdit(self)
+#        
+#        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+#                                     QDialogButtonBox.Cancel)
+#
+#        buttonBox.accepted.connect(self.make_new)
+#        buttonBox.rejected.connect(self.reject)
+#
+#        self.nameEdit.textChanged[str].connect(self.setName)
+#        self.rateEdit.textChanged[str].connect(self.setRate)
+#
+#        layout = QGridLayout()
+#        layout.setColumnStretch(1, 1)
+#
+#        row = 0
+#        layout.addWidget(self.nameLabel, row, 0)
+#        layout.addWidget(self.nameEdit, row, 1)
+#        
+#        row += 1
+#        layout.addWidget(self.rateLabel, row, 0)
+#        layout.addWidget(self.rateEdit, row, 1)
+#        
+#        row += 1
+#        layout.addWidget(buttonBox, row, 1)
+# 
+#        self.setLayout(layout)
+#        
+#        self.setWindowTitle('New timesheet')
+#        
+#        self.name = None
+#        self.rate = None
+#        
+#        
+#    def setName(self, text):
+#        self.name = text
+#        
+#    def setRate(self, text):
+#        self.rate = text
+#        
+#    def name_message(self):
+#        title = 'No name provided!'
+#        message = 'Please provide a name for the new timesheet.'
+#        QMessageBox.warning(self, title, message)
+#        
+#    def rate_message(self):
+#        title = 'No rate provided!'
+#        message = 'Please provide a default pay rate for the new timesheet.'
+#        QMessageBox.warning(self, title, message)
+#        
+#    def name_error(self):
+#        title = 'Timesheet already exists!'
+#        message = '''There is already a timesheet called "{}". Please provide 
+#another name.'''.format(self.name)
+#        QMessageBox.critical(self, title, message)
+#        
+#        
+#    def make_new(self):
+#        """ Make new timesheet."""
+#        
+#        # if no name has been entered, prompt the user to do so
+#        if self.name is None:
+#            self.name_message()
+#            # break or something? valid flag?
+#            
+#        # if no rate has been entered, prompt the user to do so
+#        if self.rate is None:
+#            self.rate_message()
+#            # break or something? valid flag?
+#            
+#        else:
+#            self.name = re.sub('\s', '_', self.name)
+#            path = os.path.join(datapath, self.name)
+#            
+#            try:
+#                # if name does not already exist, make csv and config files
+#                os.mkdir(path)
+#                
+#                base = 'ts_'+self.name.lower()
+#                
+#                self.new_csv  = os.path.join(path, base+'.csv')
+#                self.new_conf = os.path.join(path, base+'.conf')
+#                
+#                with open(self.new_csv, 'w') as fileobj:
+#                    fileobj.write('Date,Duration,Activity,Rate\n')
+#                    
+#                with open(self.new_conf, 'w') as fileobj:
+#                    text = 'name={}\nrate={}\n'.format(self.name, self.rate)
+#                    fileobj.write(text)
+#            
+#                self.accept()
+#                
+#            except FileExistsError:
+#                # if name is already taken, get user to enter another one
+#                self.name_error()
+#                # and reset dialog
+#                self.initUI()
+#
+#    # don't think these are actually used - now part of Data
+#    @property 
+#    def csvname(self):
+#        return self.new_csv
+#    
+#    @property 
+#    def confname(self):
+#        return self.new_conf
     
     
 class TimesheetsFileDialog(QDialog):
