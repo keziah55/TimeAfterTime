@@ -104,17 +104,17 @@ class Data:
         # store new name variable
         self.name = str(value)
         
-        # get new paths to csvfile and conffile
-        _, current_csv = os.path.split(self.csvfile)
-        _, current_conf = os.path.split(self.conffile)
+        current_files = (self.csvfile, self.conffile)
+        new_files = self.getCsvConfFiles(self.name)
         
-        current_csv = os.path.join(new_path, current_csv)
-        current_conf = os.path.join(new_path, current_conf)
-        
-        self.csvfile, self.conffile = self.getCsvConfFiles(self.name)
-        
-        os.rename(current_csv, self.csvfile)
-        os.rename(current_conf, self.conffile)
+        for n in range(len(current_files)):
+            file = current_files[n]
+            new = new_files[n]
+            _, current = os.path.split(file)
+            current = os.path.join(new_path, current)
+            os.rename(current, new)
+            
+        self.csvfile, self.conffile = new_files
         
         # set new path for cfg
         self.cfg.setFilename(self.conffile)
