@@ -8,8 +8,8 @@ from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import (QAction, QApplication, QDesktopWidget, 
                              QFileDialog, QMainWindow, QMessageBox, QTextEdit)
 
-from editdialogs import (AddLineDialog, NewRateDialog, RemoveLineDialog, 
-                         EditLineDialog)
+from editdialogs import (AddLineDialog, EditTimesheetSettingsDialog,
+                         RemoveLineDialog, EditLineDialog)
 from filedialogs import (NewTimesheetDialog, OpenTimesheetDialog, 
                          DeleteTimesheetDialog)
 #from configdialogs import ConfigDataDialog
@@ -215,7 +215,9 @@ class TimeAfterTime(QMainWindow):
         
     def update_display(self):
         """ Update text and window title """
+        # check if name has changed
         self.updateName()
+        # update text displayed
         self.textEdit.setHtml(csv_to_html(self.data.csv_data, 
                                           self.data.timebase,
                                           self.data.currency))
@@ -317,10 +319,9 @@ class TimeAfterTime(QMainWindow):
                           "Create and manage timesheets.\n"
                           "See README for more details. ")
            
-    def setRate(self):
-        """ Set the default rate of pay. """
-        # rate is saved to Data in NewRateDialog
-        self.nrd = NewRateDialog(self.data)
+    def editSettings(self):
+        """ Change timesheet config data """
+        self.nrd = EditTimesheetSettingsDialog(self.data)
         self.nrd.show()
         self.nrd.accepted.connect(self.update_display)
     
@@ -361,10 +362,10 @@ class TimeAfterTime(QMainWindow):
                 shortcut=QKeySequence("E"), statusTip="Edit entries",
                 triggered=self.editEntries)
         
-        self.setRateAct = QAction(QIcon.fromTheme('preferences-system'), 
-                "Set rate of pay", self, shortcut=QKeySequence("R"), 
-                statusTip="Set rate of pay and time base", 
-                triggered=self.setRate)
+        self.editSettingsAct = QAction(QIcon.fromTheme('preferences-system'), 
+                "Edit settings", self, shortcut="Ctrl+P", 
+                statusTip="Set timesheet name, rate of pay and time base", 
+                triggered=self.editSettings)
         
         self.deleteAct = QAction("Delete", self,
                 shortcut="Ctrl+D", statusTip="Delete timesheet",
@@ -379,6 +380,7 @@ class TimeAfterTime(QMainWindow):
         self.fileMenu.addAction(self.saveAct)
         self.fileMenu.addAction(self.exportAct)
         self.fileMenu.addAction(self.deleteAct)
+        self.fileMenu.addAction(self.editSettingsAct)
         self.fileMenu.addSeparator();
         self.fileMenu.addAction(self.exitAct)
         
@@ -386,8 +388,7 @@ class TimeAfterTime(QMainWindow):
         self.editMenu.addAction(self.addAct)
         self.editMenu.addAction(self.removeAct)
         self.editMenu.addAction(self.editAct)
-        self.editMenu.addAction(self.setRateAct)
-
+        
         self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu("&Help")
@@ -399,10 +400,11 @@ class TimeAfterTime(QMainWindow):
         self.fileToolBar.addAction(self.newAct)
         self.fileToolBar.addAction(self.openAct)
         self.fileToolBar.addAction(self.saveAct)
+        self.fileToolBar.addAction(self.editSettingsAct)
         
         self.editToolBar = self.addToolBar("Edit")
         self.editToolBar.addAction(self.addAct)
-        self.editToolBar.addAction(self.setRateAct)
+        
 
 
     def maybeSave(self):

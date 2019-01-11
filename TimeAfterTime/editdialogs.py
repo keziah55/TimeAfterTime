@@ -1,15 +1,17 @@
 """ 
 Dialogs required by Timesheet when adding or removing data.
 Supplies AddLineDialog, NewRateDialog, and RemoveLineDialog.
+
+Also supplies EditTimesheetSettingsDialog.
 """
 
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QCompleter, QDialog, 
-                             QDialogButtonBox, QGridLayout, QLabel, QLineEdit, 
-                             QMessageBox, QPushButton, QRadioButton,  
-                             QTableWidget, QTableWidgetItem, QVBoxLayout)
-from configdialogs import ConfigDataDialog
+from PyQt5.QtWidgets import (QAbstractItemView, QCompleter, QDialogButtonBox, 
+                             QGridLayout, QLabel, QLineEdit, QMessageBox,
+                             QPushButton, QTableWidget, QTableWidgetItem, 
+                             QVBoxLayout)
+from configdialogs import QDialog_CTRL_Q, ConfigDataDialog
 from str_to_date import str_to_date
 from format_dur import format_duration
 from processcsv import get_unique, head_tail
@@ -19,22 +21,6 @@ from abc import abstractmethod
 
 datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 datefmt = '%d %b %Y'
-
-class QDialog_CTRL_Q(QDialog):
-    """ QDialog subclass with CRTL+Q shortcut to close window.
-    
-        Standard QDialog close shortcut is ESC, which still applies here.
-    """
-    
-    def __init__(self):
-        
-        super().__init__()
-        
-        self.exitAct = QAction("E&xit", self, 
-                               shortcut="CTRL+Q",
-                               statusTip="Exit the application", 
-                               triggered=self.close)
-        self.addAction(self.exitAct)
         
 
 class AddLineDialog(QDialog_CTRL_Q):
@@ -385,8 +371,7 @@ class EditLineDialog(TableLineDiaolg):
         self.accept()
         
         
-        
-class NewRateDialog(ConfigDataDialog):
+class EditTimesheetSettingsDialog(ConfigDataDialog):
     
     def okClicked(self):
         # apply changes to Data object; raise error message if there is invalid
@@ -432,115 +417,3 @@ class NewRateDialog(ConfigDataDialog):
             
         if valid:
             self.accept()
-
-#class NewRateDialog(QDialog_CTRL_Q):
-#    
-#    def __init__(self, data):
-#        """ Change the default rate of pay.
-#        
-#            Parameters
-#            ----------
-#            data : Data object
-#                object which holds all the csv data
-#        """
-#        super().__init__()
-#        
-#        self.initUI(data)
-#        
-#    def initUI(self, data):
-#        
-#        self.data = data
-#        
-#        # rate of pay
-#        rateLabel = QLabel('Default rate of pay:')
-#        rateLabel.setAlignment(Qt.AlignRight)
-#        self.rateEdit = QLineEdit(self)
-#        self.rateEdit.setText(self.data.rate)
-#        self.rateEdit.selectAll()
-#        
-#        # time base
-#        timeLabel = QLabel('per')
-#        self.dayButton = QRadioButton('day')
-#        self.hourButton = QRadioButton('hour')
-#        
-#        # if timebase is already set, check the right button
-#        if self.data.timebase == 'hour':
-#            self.hourButton.setChecked(True)
-#        # else, default to day
-#        else:
-#            self.dayButton.setChecked(True)
-#            
-#        radioLayout = QVBoxLayout()
-#        radioLayout.addWidget(self.dayButton)
-#        radioLayout.addWidget(self.hourButton)
-#        
-#        # currency
-#        currencyLabel = QLabel('Currency:')
-#        currencyLabel.setAlignment(Qt.AlignRight)
-#        self.currencyEdit = QLineEdit(self)
-#        self.currencyEdit.setText(self.data.currency)
-#        
-#        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
-#                                     QDialogButtonBox.Cancel)
-#
-#        buttonBox.accepted.connect(self.saveChanges)
-#        buttonBox.rejected.connect(self.reject)
-#
-#        editLayout = QGridLayout()
-#        
-#        row = 0
-#        editLayout.addWidget(rateLabel, row, 0)
-#        editLayout.addWidget(self.rateEdit, row, 1)
-#        editLayout.addWidget(timeLabel, row, 2)
-#        editLayout.addLayout(radioLayout, row, 3)
-#        
-#        row += 1
-#        editLayout.addWidget(currencyLabel, row, 0)
-#        editLayout.addWidget(self.currencyEdit, row, 1)
-#        
-#        layout = QVBoxLayout()
-#        layout.addLayout(editLayout)
-#        layout.addWidget(buttonBox)
-# 
-#        self.setLayout(layout)
-#        
-#        self.setWindowTitle('Set default rate of pay')
-#
-#        
-#    def saveChanges(self):
-#        # apply changes to Data object; raise error message if there is invalid
-#        # data in 'rate' or 'currency'
-#        
-#        valid = True
-#        
-#        # set rate
-#        rate = self.rateEdit.text().strip()
-#        if rate:
-#            self.data.new_rate(rate)
-#        else:
-#            self.error_message('rate of pay')
-#            valid = False
-#            
-#        # set time base
-#        if self.dayButton.isChecked():
-#            self.data.new_timebase('day')
-#        else:
-#            self.data.new_timebase('hour')
-#            
-#        # set currency
-#        curr = self.currencyEdit.text().strip()
-#        if curr:
-#            self.data.new_currency(curr)
-#        else:
-#            self.error_message('currency')
-#            valid = False
-#            
-#        if valid:
-#            self.accept()
-#            
-#        
-#    def error_message(self, which):
-#        title = 'No {} provided!'.format(which)
-#        message = 'Please provide a {} for the new timesheet.'.format(which)
-#        QMessageBox.warning(self, title, message)
-        
