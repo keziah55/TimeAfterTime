@@ -16,12 +16,14 @@ TimeAfterTime allows you to create and manage timesheets.
 
 ## How do I use it?
 You can create a blank timesheet with File > New or Crtl+N. 
-You'll be asked to set a name and a default rate of pay. 
+You'll be asked to set a name and a default pay info, including 
+currency, time base (day or hour) and amount. 
 You can then add entries to the timesheet. The `date` field will
 take any reasonable date string (in day-month-year order) and, 
 if given incomplete information, will assume the current 
-date/month/year/century. The `duration` base is hours.
-It can take whole numbers, decimals or HH:MM.
+date/month/year/century. 
+If the selected time base is 'hours', the `duration` field will take
+input formatted as HH:MM, as well as whole numbers or decimals.
 
 For example, the following adds the October entries in the screenshot above:
 
