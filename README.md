@@ -6,7 +6,7 @@ GPL v3. See https://www.gnu.org/licenses/gpl-3.0.en.html
 ## What is it?
 TimeAfterTime allows you to create and manage timesheets. 
 
-![Timesheet](screenshots/timesheet0.png)
+![Timesheet-hours](screenshots/timesheet0.png)  ![Timesheet-days](screenshots/timesheet2.png)
 
 
 ## What do I need?
@@ -31,6 +31,9 @@ For example, the following adds the October entries in the screenshot above:
 
 TimeAfterTime will group your hours by month, with most recent at the 
 top. It also displays the total time and pay for that month.
+
+The timesheet name and payment details can be updated in the `Edit settings` 
+dialog.
 
 ### Managing timesheets
 
