@@ -123,12 +123,13 @@ class ConfigDataDialog(QDialog_CTRL_Q):
     @abstractmethod     
     def okClicked(self): pass
 
-    @staticmethod
-    def check_name(name):
-        name = re.sub('\s', '_', name)
-        path = os.path.join(datapath, name)
-        if os.path.exists(path):
-            return False
+    def check_name(self, name):
+        # if name has been changed, check if it is valid
+        if self.data.name != name:
+            name = re.sub('\s', '_', name)
+            path = os.path.join(datapath, name)
+            if os.path.exists(path):
+                return False
         return True
         
     def error_message(self, which):
