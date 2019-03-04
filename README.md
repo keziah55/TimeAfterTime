@@ -25,9 +25,9 @@ date/month/year/century.
 If the selected time base is 'hours', the `duration` field will take
 input formatted as HH:MM, as well as whole numbers or decimals.
 
-For example, the following adds the October entries in the screenshot above:
+For example, the following adds the 10th January entries in the second screenshot above:
 
-![Add hours](screenshots/add_hours.png)
+![Add hours](screenshots/add_hours2.png)
 
 TimeAfterTime will group your hours by month, with most recent at the 
 top. It also displays the total time and pay for that month.
