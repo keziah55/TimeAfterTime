@@ -6,7 +6,7 @@ GPL v3. See https://www.gnu.org/licenses/gpl-3.0.en.html
 ## What is it?
 TimeAfterTime allows you to create and manage timesheets. 
 
-<img src="screenshots/timesheet3.png" alt="Timesheet (hours)" width="400"/> <img src="screenshots/timesheet4.png" alt="Timesheet (days)" width="400"/>
+<img src="screenshots/timesheet5.png" alt="Timesheet (hours)" width="400"/> <img src="screenshots/timesheet6.png" alt="Timesheet (days)" width="400"/>
 
 
 ## What do I need?
