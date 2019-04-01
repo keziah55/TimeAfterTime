@@ -59,10 +59,10 @@ def str_to_date(s):
     """
     
     # make dictionary of month names and abbreviations : number
-    c_abbr = {v: k for k,v in enumerate(calendar.month_abbr)}
-    c_full = {v: k for k,v in enumerate(calendar.month_name)}
+    # cast as lower case, because case isn't important when comparing
+    c_abbr = {v.lower(): k for k,v in enumerate(calendar.month_abbr)}
+    c_full = {v.lower(): k for k,v in enumerate(calendar.month_name)}
     months = {**c_abbr, **c_full}
-    
     # remove {'':0} from dictionary
     del months['']
     
@@ -105,7 +105,7 @@ def str_to_date(s):
             
             # if month isn't a number, check if it's in the dictionary
             try:
-                d[-(n+1)] = months[l[n]]
+                d[-(n+1)] = months[l[n].lower()] # string as lower case
             except KeyError:
                 info = 'Please check given month.'
                 raise ValueError('Cannot format "{}" as date. {}'.format(s, 
