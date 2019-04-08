@@ -41,6 +41,7 @@ class Data:
             self.name = 'None'
             self.rate = ''
             self.currency = ''
+            self.timebase = ''
                        
         else:            
             self.csvfile, self.conffile = self.getCsvConfFiles(project_name)
