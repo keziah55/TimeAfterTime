@@ -21,9 +21,23 @@ from abc import abstractmethod
 
 datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 datefmt = '%d %b %Y'
-        
 
-class AddLineDialog(QDialog_CTRL_Q):
+
+class EditDialog(QDialog_CTRL_Q):
+    """ Subclass for AddLineDialog and TableLineDiaolg (which itself is the
+        subclass for RemoveLineDialog and EditLineDialog) which will display
+        a warning if the user tries to create one of these objects with no
+        timesheet open.
+    """
+    def __init__(self, data):
+        
+        super().__init__()
+        
+        if not data.csv_data.strip():
+            raise RuntimeError("Cannot edit timesheet that doesn't exist!")
+            
+
+class AddLineDialog(EditDialog):
     
     def __init__(self, data):
         """ Add lines to timesheet. 
@@ -34,10 +48,14 @@ class AddLineDialog(QDialog_CTRL_Q):
             data : Data object
                 object which holds all the csv data
         """
-        super().__init__()
-        
-        self.initUI(data)
-        
+        try:
+            super().__init__(data)
+            self.initUI(data)
+        except RuntimeError as err:
+            title = '{}'.format(err)
+            msg = "Please open or create a timesheet before trying to edit it."
+            QMessageBox.warning(self, title, msg)
+            
         
     def initUI(self, data):
         
@@ -207,7 +225,7 @@ class AddLineDialog(QDialog_CTRL_Q):
         QMessageBox.warning(self, title, message)
         
         
-class TableLineDiaolg(QDialog_CTRL_Q):
+class TableLineDiaolg(EditDialog):
     
     def __init__(self, data):
         """ Base class for displaying the timesheet as a table for editing.
@@ -222,11 +240,17 @@ class TableLineDiaolg(QDialog_CTRL_Q):
             data : Data object
                 object which holds all the csv data
         """
-        super().__init__()
         
-        self.initUI(data)
+        try:
+            super().__init__(data)
+            self.initUI(data)
+            self.customise()
+        except RuntimeError as err:
+            title = '{}'.format(err)
+            msg = "Please open or create a timesheet before trying to edit it."
+            QMessageBox.warning(self, title, msg)
         
-        self.customise()
+        
         
     def initUI(self, data):
         
