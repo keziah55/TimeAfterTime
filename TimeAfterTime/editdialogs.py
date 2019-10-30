@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QCompleter, QDialogButtonBox,
                              QGridLayout, QLabel, QLineEdit, QMessageBox,
                              QPushButton, QTableWidget, QTableWidgetItem, 
                              QVBoxLayout)
+from metaclass import QtABCMeta
 from configdialogs import QDialog_CTRL_Q, ConfigDataDialog
 from str_to_date import str_to_date
 from format_dur import format_duration
@@ -23,7 +24,7 @@ datapath = os.path.join(os.path.expanduser('~'), '.timeaftertime')
 datefmt = '%d %b %Y'
 
 
-class EditDialog(QDialog_CTRL_Q):
+class EditDialog(QDialog_CTRL_Q, metaclass=QtABCMeta):
     """ Subclass for AddLineDialog and TableLineDiaolg (which itself is the
         subclass for RemoveLineDialog and EditLineDialog) which will display
         a warning if the user tries to create one of these objects with no
@@ -241,7 +242,7 @@ class AddLineDialog(QDialog_CTRL_Q):
         QMessageBox.warning(self, title, message)
         
         
-class TableLineDiaolg(EditDialog):
+class TableLineDiaolg(EditDialog, metaclass=QtABCMeta):
     
     def __init__(self, data):
         """ Base class for displaying the timesheet as a table for editing.

@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QAction,  QDialog, QDialogButtonBox, QGridLayout, 
                              QLabel, QLineEdit, QMessageBox, QRadioButton,  
                              QVBoxLayout)
+from metaclass import QtABCMeta
 import os
 import re
 from abc import abstractmethod
@@ -32,7 +33,7 @@ class QDialog_CTRL_Q(QDialog):
         self.addAction(self.exitAct)
         
 
-class ConfigDataDialog(QDialog_CTRL_Q):
+class ConfigDataDialog(QDialog_CTRL_Q, metaclass=QtABCMeta):
     
     def __init__(self, data=None):
         """ Set values that appear in the config file.

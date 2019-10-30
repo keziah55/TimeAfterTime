@@ -6,6 +6,7 @@ OpenTimesheetDialog and DeleteTimesheetDialog).
 from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, 
                              QListWidget, QListWidgetItem, QMessageBox, 
                              QVBoxLayout)
+from metaclass import QtABCMeta
 from configdialogs import ConfigDataDialog
 import os
 import re
@@ -86,7 +87,7 @@ class NewTimesheetDialog(ConfigDataDialog):
                 self.initUI()
         
     
-class TimesheetsFileDialog(QDialog):
+class TimesheetsFileDialog(QDialog, metaclass=QtABCMeta):
     
     def __init__(self):
         """ Dialog to select timesheet(s). """
