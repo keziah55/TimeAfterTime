@@ -31,13 +31,20 @@ class EditDialog(QDialog_CTRL_Q):
     """
     def __init__(self, data):
         
-        super().__init__()
-        
-        if not data.csv_data.strip():
-            raise RuntimeError("Cannot edit timesheet that doesn't exist!")
+        if data.csv_data.strip():
+            super().__init__()
+            self.initUI(data)
+        else:
+            title = "Cannot edit timesheet that doesn't exist!"
+            msg = "Please open or create a timesheet before trying to edit it."
+            QMessageBox.warning(self, title, msg)
+#            raise RuntimeError("Cannot edit timesheet that doesn't exist!")
+            
+    @abstractmethod
+    def initUI(self, data): pass
             
 
-class AddLineDialog(EditDialog):
+class AddLineDialog(QDialog_CTRL_Q):
     
     def __init__(self, data):
         """ Add lines to timesheet. 
@@ -48,65 +55,74 @@ class AddLineDialog(EditDialog):
             data : Data object
                 object which holds all the csv data
         """
-        try:
-            super().__init__(data)
-            self.initUI(data)
-        except RuntimeError as err:
-            title = '{}'.format(err)
-            msg = "Please open or create a timesheet before trying to edit it."
-            QMessageBox.warning(self, title, msg)
+#        super().__init__(data)
+#        self.initUI(data)
+        
+#        if data.csv_data.strip():
+        super().__init__()
+        self.initUI(data)
+#        else:
+#            title = "Cannot edit timesheet that doesn't exist!"
+#            msg = "Please open or create a timesheet before trying to edit it."
+#            QMessageBox.warning(self, title, msg)
             
         
     def initUI(self, data):
         
-        # 'data' is the csv/config data object
-        self.data = data
-        
-        self.newData = ''
-        
-        self.rows = []
-        
-        # message for main window status bar
-        self.msg = ''
-        
-        # get words for QCompleter
-        self.uniqact = get_unique(self.data.csv_data, 'Activity', False)
-        
-        self.newButton = QPushButton(QIcon.fromTheme('list-add'), '')
-        self.newButton.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_N))
-        self.newButton.clicked.connect(self.addLine)
-        
-        self.dateLabel = QLabel('Date')
-        self.durLabel = QLabel('Duration ({})'.format(self.data.timebase+'s'))
-        self.actLabel = QLabel('Activity')
-        self.rateLabel = QLabel('Rate') 
-
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
-                                     QDialogButtonBox.Cancel)
-
-        buttonBox.accepted.connect(self.set_new_values)
-        buttonBox.rejected.connect(self.reject)
-
-        self.layout = QGridLayout()
-        
-        self.row = 0
-        
-        self.layout.addWidget(self.newButton, self.row, 0)
-        self.layout.addWidget(buttonBox, self.row, 1)
-        
-        self.row += 1
-
-        self.layout.addWidget(self.dateLabel, self.row, 0)
-        self.layout.addWidget(self.durLabel, self.row, 1)
-        self.layout.addWidget(self.actLabel, self.row, 2)
-        self.layout.addWidget(self.rateLabel, self.row, 3)
-        
-        # add lineedit objects
-        self.addLine()
-        
-        self.setLayout(self.layout)
-        
-        self.setWindowTitle('Add hours')
+        if not data.csv_data.strip():
+            title = "Cannot edit timesheet that doesn't exist!"
+            msg = "Please open or create a timesheet before trying to edit it."
+            QMessageBox.warning(self, title, msg)
+            
+        else:
+            # 'data' is the csv/config data object
+            self.data = data
+            
+            self.newData = ''
+            
+            self.rows = []
+            
+            # message for main window status bar
+            self.msg = ''
+            
+            # get words for QCompleter
+            self.uniqact = get_unique(self.data.csv_data, 'Activity', False)
+            
+            self.newButton = QPushButton(QIcon.fromTheme('list-add'), '')
+            self.newButton.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_N))
+            self.newButton.clicked.connect(self.addLine)
+            
+            self.dateLabel = QLabel('Date')
+            self.durLabel = QLabel('Duration ({})'.format(self.data.timebase+'s'))
+            self.actLabel = QLabel('Activity')
+            self.rateLabel = QLabel('Rate') 
+    
+            buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | 
+                                         QDialogButtonBox.Cancel)
+    
+            buttonBox.accepted.connect(self.set_new_values)
+            buttonBox.rejected.connect(self.reject)
+    
+            self.layout = QGridLayout()
+            
+            self.row = 0
+            
+            self.layout.addWidget(self.newButton, self.row, 0)
+            self.layout.addWidget(buttonBox, self.row, 1)
+            
+            self.row += 1
+    
+            self.layout.addWidget(self.dateLabel, self.row, 0)
+            self.layout.addWidget(self.durLabel, self.row, 1)
+            self.layout.addWidget(self.actLabel, self.row, 2)
+            self.layout.addWidget(self.rateLabel, self.row, 3)
+            
+            # add lineedit objects
+            self.addLine()
+            
+            self.setLayout(self.layout)
+            
+            self.setWindowTitle('Add hours')
         
         
     def makeLine(self):

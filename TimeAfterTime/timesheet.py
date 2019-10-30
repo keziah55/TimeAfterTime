@@ -318,7 +318,7 @@ class TimeAfterTime(QMainWindow):
     def about(self):
         QMessageBox.about(self, "About TimeAfterTime",
                           "Create and manage timesheets.\n"
-                          "See README for more details. ")
+                          "See README for more details.")
            
     def editSettings(self):
         """ Change timesheet config data """
